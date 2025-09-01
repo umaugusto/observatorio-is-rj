@@ -2,9 +2,12 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Home } from './pages/Home';
 import { Casos } from './pages/Casos';
 import { Login } from './pages/Login';
+import { Profile } from './pages/Profile';
+import { UserManagement } from './pages/admin/UserManagement';
 import { ROUTES } from './utils/constants';
 
 function App() {
@@ -18,6 +21,26 @@ function App() {
               <Route path={ROUTES.HOME} element={<Home />} />
               <Route path={ROUTES.CASOS} element={<Casos />} />
               <Route path={ROUTES.LOGIN} element={<Login />} />
+              
+              {/* Protected Routes */}
+              <Route 
+                path={ROUTES.PROFILE} 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Admin Routes - Protected */}
+              <Route 
+                path={ROUTES.ADMIN_USERS} 
+                element={
+                  <ProtectedRoute adminOnly>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
               
               {/* Placeholders para futuras páginas */}
               <Route path="/categorias" element={<PlaceholderPage title="Categorias" />} />

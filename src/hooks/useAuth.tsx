@@ -11,10 +11,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('🚀 useAuth: Iniciando verificação de autenticação');
     
+    // Debug: verificar localStorage
+    const supabaseAuth = localStorage.getItem('sb-vpdtoxesovtplyowquyh-auth-token');
+    console.log('🔍 useAuth: LocalStorage auth token exists:', !!supabaseAuth);
+    if (supabaseAuth) {
+      try {
+        const parsed = JSON.parse(supabaseAuth);
+        console.log('🔍 useAuth: Token expires at:', new Date(parsed.expires_at * 1000));
+        console.log('🔍 useAuth: Current time:', new Date());
+      } catch (e) {
+        console.log('🔍 useAuth: Erro ao parsear token do localStorage');
+      }
+    }
+    
     // Verificar sessão existente
     const getInitialSession = async () => {
       try {
         console.log('🔍 useAuth: Verificando sessão existente...');
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -25,9 +39,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (session?.user) {
           console.log('✅ useAuth: Sessão encontrada para:', session.user.email);
-          const userData = await getOrCreateUser(session.user);
-          console.log('👤 useAuth: Dados do usuário:', userData);
-          setUser(userData);
+          console.log('📅 useAuth: Sessão expira em:', new Date(session.expires_at! * 1000));
+          
+          try {
+            const userData = await getOrCreateUser(session.user);
+            console.log('👤 useAuth: Dados do usuário:', userData);
+            setUser(userData);
+          } catch (userError) {
+            console.error('❌ useAuth: Erro ao buscar dados do usuário:', userError);
+            // Manter usuário logado mesmo se houver erro ao buscar dados
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              nome: session.user.email!.split('@')[0],
+              tipo: 'extensionista',
+              ativo: true,
+              created_at: session.user.created_at,
+              updated_at: session.user.updated_at || session.user.created_at
+            } as any);
+          }
         } else {
           console.log('ℹ️ useAuth: Nenhuma sessão ativa encontrada');
         }

@@ -6,6 +6,8 @@ export const ROUTES = {
   SOBRE: '/sobre',
   CONTATO: '/contato',
   LOGIN: '/login',
+  PROFILE: '/perfil',
+  ADMIN_USERS: '/admin/usuarios',
 } as const;
 
 export const CATEGORIES = [
@@ -22,6 +24,8 @@ export const CATEGORIES = [
 export const USER_TYPES = {
   ADMIN: 'admin',
   EXTENSIONISTA: 'extensionista',
+  PESQUISADOR: 'pesquisador',
+  COORDENADOR: 'coordenador',
 } as const;
 
 export const APP_NAME = 'Observatório de Inovação Social - RJ';

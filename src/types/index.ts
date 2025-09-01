@@ -2,11 +2,11 @@ export interface User {
   id: string;
   email: string;
   nome: string;
-  tipo: 'admin' | 'extensionista';
+  tipo: 'admin' | 'extensionista' | 'pesquisador' | 'coordenador';
   instituicao?: string;
   telefone?: string;
   bio?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
