@@ -12,6 +12,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     console.log('🚀 useAuth: Iniciando verificação de autenticação');
     
+    // TIMEOUT DE EMERGÊNCIA - FORÇA CARREGAMENTO
+    const emergencyTimeout = setTimeout(() => {
+      console.log('🚨 EMERGÊNCIA: Forçando fim do loading após 2 segundos');
+      setLoading(false);
+    }, 2000);
+    
     // Debug: verificar localStorage
     const supabaseAuth = localStorage.getItem('sb-vpdtoxesovtplyowquyh-auth-token');
     console.log('🔍 useAuth: LocalStorage auth token exists:', !!supabaseAuth);
@@ -34,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (error) {
           console.error('❌ useAuth: Erro ao obter sessão:', error);
+          clearTimeout(emergencyTimeout);
           setLoading(false);
           return;
         }
@@ -65,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('❌ useAuth: Erro na verificação inicial:', error);
       } finally {
+        clearTimeout(emergencyTimeout);
         setLoading(false);
       }
     };
@@ -96,7 +104,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(emergencyTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
