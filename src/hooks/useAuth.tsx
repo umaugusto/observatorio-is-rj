@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<User> => {
     console.log('🔐 signIn: Tentando login para:', email);
     
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -125,6 +125,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     console.log('✅ signIn: Login bem-sucedido para:', email);
     console.log('📊 signIn: Session data:', data.session?.user?.id);
+
+    // Aguardar busca/criação do usuário após login
+    if (data.session?.user) {
+      console.log('👤 signIn: Buscando/criando dados do usuário...');
+      const userData = await getOrCreateUser(data.session.user);
+      if (userData) {
+        console.log('✅ signIn: Usuário configurado:', userData.email);
+        setUser(userData);
+        return userData;
+      } else {
+        throw new Error('Erro ao obter dados do usuário após login');
+      }
+    } else {
+      throw new Error('Sessão inválida após login');
+    }
   };
 
   const signInDemo = async () => {

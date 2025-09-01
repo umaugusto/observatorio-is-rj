@@ -11,7 +11,9 @@
       "Bash(git push:*)",
       "Bash(npm run build:*)",
       "Bash(npm run lint)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm outdated)"
     ],
     "deny": [],
     "ask": []

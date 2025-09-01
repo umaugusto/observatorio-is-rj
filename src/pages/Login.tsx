@@ -32,9 +32,10 @@ export const Login = () => {
 
     try {
       console.log('🔐 Login: Chamando signIn...');
-      await signIn(email, password);
+      const userData = await signIn(email, password);
       
-      console.log('✅ Login: signIn completado, resetando loading...');
+      console.log('✅ Login: signIn completado com usuário:', userData.email);
+      console.log('👤 Login: Dados do usuário:', userData);
       setLoading(false);
       
       console.log('🚀 Login: Navegando para home...');

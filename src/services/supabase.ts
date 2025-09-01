@@ -206,8 +206,7 @@ export const getUser = async (userId: string): Promise<User | null> => {
     const queryPromise = supabase
       .from('usuarios')
       .select('*')
-      .eq('id', userId)
-      .single();
+      .eq('id', userId);
     
     console.log('⏳ getUser: Query criada, aguardando resposta...');
     
@@ -215,30 +214,35 @@ export const getUser = async (userId: string): Promise<User | null> => {
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
     
     console.log('📦 getUser: Resposta recebida do Supabase');
-    console.log('📊 getUser: Data:', data ? 'existe' : 'null');
+    console.log('📊 getUser: Data length:', data ? data.length : 'null');
     console.log('❌ getUser: Error:', error ? error.code + ': ' + error.message : 'null');
 
     if (error) {
       console.error('❌ getUser: Erro ao buscar usuário:', error);
       console.error('❌ getUser: Código do erro:', error.code);
       console.error('❌ getUser: Mensagem:', error.message);
-      
-      // Se o erro for "row not found", é diferente de erro de conexão
-      if (error.code === 'PGRST116') {
-        console.warn('⚠️ getUser: Usuário não encontrado na tabela usuarios. Isso pode ser normal.');
-        return null;
-      }
-      
-      throw error; // Re-throw outros erros
+      throw error;
     }
     
-    console.log('✅ getUser: Usuário encontrado:', { id: data.id, email: data.email, tipo: data.tipo });
+    // Se não encontrou nenhum usuário
+    if (!data || data.length === 0) {
+      console.warn('⚠️ getUser: Usuário não encontrado na tabela usuarios. Isso pode ser normal.');
+      return null;
+    }
+    
+    // Se encontrou múltiplos usuários (problema de duplicata)
+    if (data.length > 1) {
+      console.warn('⚠️ getUser: Múltiplos usuários encontrados com mesmo ID! Usando o primeiro.');
+    }
+    
+    const userData = data[0];
+    console.log('✅ getUser: Usuário encontrado:', { id: userData.id, email: userData.email, tipo: userData.tipo });
     
     // Mapear dados para manter compatibilidade
-    return data ? {
-      ...data,
-      data_criacao: data.created_at // Para compatibilidade
-    } : null;
+    return {
+      ...userData,
+      data_criacao: userData.created_at // Para compatibilidade
+    };
     
   } catch (error: any) {
     console.error('💥 getUser: Erro capturado na função:', error);
@@ -255,47 +259,70 @@ export const getUser = async (userId: string): Promise<User | null> => {
 // Nova função para criar usuário automaticamente se não existir
 export const createUserFromAuth = async (authUser: any): Promise<User> => {
   console.log('🆕 createUserFromAuth: Criando usuário para:', authUser.email);
+  console.log('🆕 createUserFromAuth: Auth user ID:', authUser.id);
   
   const userData = {
     id: authUser.id,
     email: authUser.email,
     nome: authUser.email.split('@')[0] || 'Usuário',
     tipo: 'extensionista' as const,
-    instituicao: authUser.email.includes('@') ? authUser.email.split('@')[1] : null,
     ativo: true
   };
+
+  console.log('🆕 createUserFromAuth: Dados a serem inseridos:', userData);
 
   const { data, error } = await supabase
     .from('usuarios')
     .insert([userData])
-    .select()
-    .single();
+    .select();
 
   if (error) {
     console.error('❌ createUserFromAuth: Erro ao criar usuário:', error);
+    console.error('❌ createUserFromAuth: Código do erro:', error.code);
+    console.error('❌ createUserFromAuth: Mensagem:', error.message);
+    console.error('❌ createUserFromAuth: Details:', error.details);
+    
+    // Se o erro for de usuário já existente, tentar buscar
+    if (error.code === '23505') { // Unique constraint violation
+      console.log('🔄 createUserFromAuth: Usuário já existe, tentando buscar...');
+      const existingUser = await getUser(authUser.id);
+      if (existingUser) {
+        return existingUser;
+      }
+    }
+    
     throw error;
   }
 
-  console.log('✅ createUserFromAuth: Usuário criado com sucesso:', data.email);
+  // Pegar o primeiro resultado se for array
+  const userData_result = Array.isArray(data) ? data[0] : data;
+  
+  if (!userData_result) {
+    throw new Error('Erro: Usuário não foi criado corretamente');
+  }
+
+  console.log('✅ createUserFromAuth: Usuário criado com sucesso:', userData_result.email);
   
   return {
-    ...data,
-    data_criacao: data.created_at
+    ...userData_result,
+    data_criacao: userData_result.created_at
   };
 };
 
-// Função para obter ou criar usuário
+// Função para obter usuário (SEM criação automática - segurança)
 export const getOrCreateUser = async (authUser: any): Promise<User | null> => {
   try {
-    // Primeiro tenta buscar o usuário existente
+    // Buscar usuário existente na tabela usuarios
     const existingUser = await getUser(authUser.id);
     if (existingUser) {
+      console.log('✅ getOrCreateUser: Usuário encontrado e autorizado:', existingUser.email);
       return existingUser;
     }
     
-    // Se não encontrar, cria automaticamente
-    console.log('👤 getOrCreateUser: Usuário não existe, criando automaticamente...');
-    return await createUserFromAuth(authUser);
+    // SEGURANÇA: Se não encontrar na tabela usuarios, REJEITAR login
+    console.warn('🚫 getOrCreateUser: Usuário não cadastrado no sistema:', authUser.email);
+    console.warn('🚫 getOrCreateUser: Login rejeitado - apenas usuários cadastrados podem acessar');
+    return null;
     
   } catch (error) {
     console.error('❌ getOrCreateUser: Erro geral:', error);

@@ -87,7 +87,7 @@ export interface ContactMessageInput {
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<User>;
   signInDemo: () => Promise<void>;
   signOut: () => Promise<void>;
 }
