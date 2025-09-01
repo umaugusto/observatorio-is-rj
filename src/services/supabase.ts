@@ -380,6 +380,121 @@ export const createNewUser = async (userData: Omit<User, 'id' | 'created_at' | '
   };
 };
 
+// Nova função para criar usuário com senha padrão
+export const createUserWithDefaultPassword = async (userData: {
+  email: string;
+  nome: string;
+  tipo: User['tipo'];
+  ativo?: boolean;
+}): Promise<User> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.createNewUser({ ...userData, must_change_password: true });
+  }
+
+  const defaultPassword = '12345678';
+  console.log('🔑 createUserWithDefaultPassword: Criando usuário com senha padrão:', userData.email);
+  
+  try {
+    // 1. Criar usuário no Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: userData.email,
+      password: defaultPassword,
+      email_confirm: true // Auto-confirma o email
+    });
+
+    if (authError) {
+      console.error('❌ Erro ao criar usuário no Auth:', authError);
+      throw authError;
+    }
+
+    if (!authData.user) {
+      throw new Error('Usuário criado no Auth mas dados não retornados');
+    }
+
+    // 2. Criar usuário na tabela usuarios com flag de mudança de senha
+    const userRecord = {
+      id: authData.user.id,
+      email: userData.email,
+      nome: userData.nome,
+      tipo: userData.tipo,
+      ativo: userData.ativo ?? true,
+      must_change_password: true
+    };
+
+    const { data, error } = await supabase
+      .from('usuarios')
+      .insert([userRecord])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Erro ao criar usuário na tabela:', error);
+      // Tentar deletar usuário do Auth se falhou na tabela
+      try {
+        await supabase.auth.admin.deleteUser(authData.user.id);
+      } catch (cleanupError) {
+        console.error('❌ Erro ao limpar usuário do Auth:', cleanupError);
+      }
+      throw error;
+    }
+
+    console.log('✅ createUserWithDefaultPassword: Usuário criado com sucesso');
+    console.log('ℹ️  Senha padrão:', defaultPassword, '(usuário deve alterar no primeiro acesso)');
+    
+    return {
+      ...data,
+      data_criacao: data.created_at
+    };
+
+  } catch (error: any) {
+    console.error('💥 createUserWithDefaultPassword: Erro geral:', error);
+    throw error;
+  }
+};
+
+// Nova função para resetar senha para padrão
+export const resetUserPassword = async (userId: string): Promise<void> => {
+  if (isDemoMode()) {
+    return; // Em modo demo, apenas simular sucesso
+  }
+
+  const defaultPassword = '12345678';
+  console.log('🔄 resetUserPassword: Resetando senha para padrão:', userId);
+  
+  try {
+    // 1. Resetar senha no Supabase Auth
+    const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
+      password: defaultPassword
+    });
+
+    if (authError) {
+      console.error('❌ Erro ao resetar senha no Auth:', authError);
+      throw authError;
+    }
+
+    // 2. Marcar que usuário deve alterar senha
+    const { error: dbError } = await supabase
+      .from('usuarios')
+      .update({ 
+        must_change_password: true,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', userId);
+
+    if (dbError) {
+      console.error('❌ Erro ao atualizar flag no banco:', dbError);
+      throw dbError;
+    }
+
+    console.log('✅ resetUserPassword: Senha resetada com sucesso');
+    console.log('ℹ️  Nova senha padrão:', defaultPassword, '(usuário deve alterar no próximo acesso)');
+
+  } catch (error: any) {
+    console.error('💥 resetUserPassword: Erro geral:', error);
+    throw error;
+  }
+};
+
 export const updateUser = async (userId: string, updates: Partial<User>): Promise<User> => {
   if (isDemoMode()) {
     return DemoInterceptor.updateUser(userId, updates);
@@ -460,19 +575,19 @@ export const toggleUserStatus = async (userId: string, ativo: boolean): Promise<
   };
 };
 
-export const resetUserPassword = async (email: string): Promise<void> => {
-  console.log('🔑 resetUserPassword: Enviando email de reset para:', email);
+export const resetUserPasswordByEmail = async (email: string): Promise<void> => {
+  console.log('🔑 resetUserPasswordByEmail: Enviando email de reset para:', email);
   
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/reset-password`,
   });
 
   if (error) {
-    console.error('❌ resetUserPassword: Erro ao enviar email de reset:', error);
+    console.error('❌ resetUserPasswordByEmail: Erro ao enviar email de reset:', error);
     throw error;
   }
 
-  console.log('✅ resetUserPassword: Email de reset enviado com sucesso');
+  console.log('✅ resetUserPasswordByEmail: Email de reset enviado com sucesso');
 };
 
 // Funções para gerenciamento de avatares

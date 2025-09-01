@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAllUsers, createNewUser, updateUser, deleteUser, toggleUserStatus, resetUserPassword, uploadAvatarOnly } from '../../services/supabase';
+import { getAllUsers, updateUser, deleteUser, toggleUserStatus, uploadAvatarOnly, createUserWithDefaultPassword, resetUserPassword as resetToDefaultPassword } from '../../services/supabase';
 import { Avatar } from '../../components/common/Avatar';
 import type { User } from '../../types';
 
@@ -53,17 +53,18 @@ export const UserManagement = () => {
     }
   };
 
-  // Reset de senha
-  const handleResetPassword = async (email: string, userName: string) => {
-    if (!confirm(`Deseja enviar um email de redefinição de senha para "${userName}" (${email})?`)) {
+  // Redefinir senha para padrão
+  const handleResetPassword = async (userId: string, userName: string) => {
+    if (!confirm(`Redefinir senha de "${userName}" para a senha padrão (12345678)? O usuário será obrigado a alterar no próximo login.`)) {
       return;
     }
 
     try {
-      await resetUserPassword(email);
-      alert(`Email de redefinição de senha enviado para ${email}`);
+      await resetToDefaultPassword(userId);
+      alert(`Senha de "${userName}" redefinida para senha padrão. O usuário deve alterar no próximo login.`);
+      await loadUsers(); // Recarregar lista
     } catch (err: any) {
-      setError('Erro ao enviar email de reset: ' + err.message);
+      setError('Erro ao redefinir senha: ' + err.message);
     }
   };
 
@@ -200,9 +201,9 @@ export const UserManagement = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleResetPassword(user.email, user.nome)}
+                          onClick={() => handleResetPassword(user.id, user.nome)}
                           className="inline-flex items-center justify-center w-8 h-8 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 rounded-full transition-colors"
-                          title="Redefinir senha"
+                          title="Redefinir senha para padrão (12345678)"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -343,8 +344,13 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
         // Editar usuário existente
         await updateUser(user.id, userData);
       } else {
-        // Criar novo usuário
-        await createNewUser(userData);
+        // Criar novo usuário com senha padrão
+        await createUserWithDefaultPassword({
+          email: formData.email,
+          nome: formData.nome,
+          tipo: formData.tipo,
+          ativo: formData.ativo
+        });
       }
       
       onSave();
@@ -427,6 +433,18 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
                 </svg>
                 Informações Básicas
               </h4>
+              
+              {!user && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-4 text-sm">
+                  <div className="flex items-center">
+                    <span className="text-lg mr-2">🔑</span>
+                    <div>
+                      <div className="font-semibold">Senha padrão automática</div>
+                      <div>O usuário receberá a senha padrão <code className="bg-blue-100 px-1 rounded">12345678</code> e será obrigado a alterá-la no primeiro acesso.</div>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

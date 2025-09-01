@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userData);
         return userData;
       } else {
-        throw new Error('Erro ao obter dados do usuário após login');
+        throw new Error('Acesso negado: apenas usuários previamente cadastrados podem acessar o sistema. Entre em contato com o administrador.');
       }
     } else {
       throw new Error('Sessão inválida após login');

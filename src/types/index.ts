@@ -8,6 +8,7 @@ export interface User {
   bio?: string;
   avatar_url?: string | null;
   ativo: boolean;
+  must_change_password?: boolean; // Flag para forçar troca de senha no primeiro acesso
   created_at: string;
   updated_at: string;
   data_criacao?: string; // Para compatibilidade

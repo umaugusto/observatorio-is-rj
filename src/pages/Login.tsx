@@ -175,12 +175,24 @@ export const Login = () => {
               <p className="text-sm text-gray-600 mb-4">
                 Entre em contato com o administrador para criar sua conta de extensionista.
               </p>
-              <Link 
-                to={`${ROUTES.CONTATO}?tipo=acesso`}
-                className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline"
-              >
-                📝 Solicitar acesso como extensionista
-              </Link>
+              <div className="space-y-2">
+                <Link 
+                  to={`${ROUTES.CONTATO}?tipo=acesso`}
+                  className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                >
+                  📝 Solicitar acesso como extensionista
+                </Link>
+                
+                <div className="text-sm text-gray-500">
+                  <span>Admin com problemas de acesso? </span>
+                  <Link 
+                    to="/emergency-setup"
+                    className="text-red-600 hover:text-red-700 hover:underline font-medium"
+                  >
+                    🚨 Setup de Emergência
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>

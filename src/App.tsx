@@ -4,6 +4,7 @@ import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { DemoBanner } from './components/common/DemoBanner';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { PasswordChangeGuard } from './components/auth/PasswordChangeGuard';
 import { Home } from './pages/Home';
 import { Casos } from './pages/Casos';
 import { CasoDetalhes } from './pages/CasoDetalhes';
@@ -15,6 +16,8 @@ import { Messages } from './pages/Messages';
 import { UserManagement } from './pages/admin/UserManagement';
 import { CaseManagement } from './pages/admin/CaseManagement';
 import { CaseEditor } from './pages/admin/CaseEditor';
+import { ChangePassword } from './pages/ChangePassword';
+import { EmergencySetup } from './pages/EmergencySetup';
 import { ROUTES } from './utils/constants';
 
 function App() {
@@ -22,15 +25,22 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="min-h-screen flex flex-col">
-          <DemoBanner />
-          <Header />
-          <main className="flex-1">
-            <Routes>
+          <PasswordChangeGuard>
+            <DemoBanner />
+            <Header />
+            <main className="flex-1">
+              <Routes>
               <Route path={ROUTES.HOME} element={<Home />} />
               <Route path={ROUTES.CASOS} element={<Casos />} />
               <Route path="/caso/:id" element={<CasoDetalhes />} />
               <Route path={ROUTES.LOGIN} element={<Login />} />
               <Route path={ROUTES.CONTATO} element={<Contato />} />
+              
+              {/* Change Password Route */}
+              <Route path="/change-password" element={<ChangePassword />} />
+              
+              {/* Emergency Setup Route */}
+              <Route path="/emergency-setup" element={<EmergencySetup />} />
               
               {/* Protected Routes */}
               <Route 
@@ -86,9 +96,10 @@ function App() {
               
               {/* 404 Page */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
+              </Routes>
+            </main>
+            <Footer />
+          </PasswordChangeGuard>
         </div>
       </Router>
     </AuthProvider>
