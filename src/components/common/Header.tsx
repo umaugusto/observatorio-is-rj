@@ -2,7 +2,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Avatar } from './Avatar';
-import { ROUTES, APP_NAME } from '../../utils/constants';
+import { Logo } from './Logo';
+import { ROUTES } from '../../utils/constants';
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -46,13 +47,8 @@ export const Header = () => {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <nav className="container-custom">
         <div className="flex justify-between items-center h-16">
-          <Link to={ROUTES.HOME} className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">OI</span>
-            </div>
-            <span className="font-semibold text-gray-900 hidden sm:block">
-              {APP_NAME}
-            </span>
+          <Link to={ROUTES.HOME} className="flex items-center">
+            <Logo size="md" showText={true} />
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">

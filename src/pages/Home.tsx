@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getCasos } from '../services/supabase';
 import { checkDatabaseSetup } from '../services/database-setup';
 import { DatabaseSetup } from '../components/setup/DatabaseSetup';
-import { ROUTES, APP_NAME } from '../utils/constants';
+import { ROUTES, APP_NAME, APP_DESCRIPTION } from '../utils/constants';
 import type { CasoInovacao } from '../types';
 
 // Componentes especializados para o bento box
@@ -256,26 +256,50 @@ export const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-20">
-        <div className="container-custom">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl font-bold mb-6">
+      <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
+        {/* Imagem de fundo do Rio de Janeiro */}
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1544737151-6e4b73628c5a?w=1920&h=1080&fit=crop&crop=center"
+            alt="Rio de Janeiro - Cristo Redentor"
+            className="w-full h-full object-cover"
+          />
+          {/* Overlay com gradiente laranja */}
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/90 via-primary-500/80 to-secondary-600/70"></div>
+        </div>
+        
+        {/* Conteúdo da hero section */}
+        <div className="relative z-10 container-custom text-center">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-6xl md:text-7xl font-bold mb-6 text-white">
               {APP_NAME}
             </h1>
-            <p className="text-xl mb-8 text-primary-100">
-              Conectando extensionistas universitários com iniciativas de impacto social 
-              no Rio de Janeiro. Descubra, catalogueAndre contribua para a transformação social.
+            <p className="text-xl md:text-2xl font-medium mb-4 text-white/95">
+              Observatório de Inovação Social
+            </p>
+            <p className="text-lg mb-8 text-white/90 max-w-3xl mx-auto leading-relaxed">
+              {APP_DESCRIPTION}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to={ROUTES.CASOS} className="btn-primary bg-white text-primary-600 hover:bg-gray-100">
+              <Link 
+                to={ROUTES.CASOS} 
+                className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-neutral-50 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
                 Explorar Casos
               </Link>
-              <Link to={ROUTES.LOGIN} className="btn-secondary bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary-600">
+              <Link 
+                to={ROUTES.LOGIN} 
+                className="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary-600 transition-all duration-300"
+              >
                 Área do Extensionista
               </Link>
             </div>
           </div>
         </div>
+        
+        {/* Decoração com formas geométricas sutis */}
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -mb-16 -ml-16"></div>
+        <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mt-12 -mr-12"></div>
       </section>
 
       {/* Stats Section */}

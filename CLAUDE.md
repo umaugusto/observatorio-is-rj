@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Observatório de Inovação Social do Rio de Janeiro - plataforma para catalogar casos de inovação social por extensionistas universitários.
+**Designário** - Observatório de Inovação Social do Rio de Janeiro - plataforma para catalogar casos de inovação social por extensionistas universitários.
 
-**Stack**: React 18 + TypeScript + Vite + Tailwind CSS + Supabase + Netlify
+**Stack**: React 18 + TypeScript + Vite + Tailwind CSS + Supabase + Netlify + Leaflet Maps
 
 ## Development Commands
 
@@ -108,12 +108,47 @@ src/
 - Component-level state with `useState` for forms
 - No external state management library
 
-### Styling Standards
+### Styling Standards & Brand Colors
 - Tailwind CSS only - no custom CSS
 - Custom classes: `container-custom`, `btn-primary`, `btn-secondary`, `card`
 - Mobile-first responsive design
-- Color scheme: `primary-*` (blue), `gray-*`, `red-*`, `green-*`
-- User type badge colors: admin (purple), coordenador (indigo), pesquisador (green), extensionista (blue)
+
+#### Brand Color Palette
+- **Primary (Orange)**: `primary-*` - Main brand color (#E95420)
+- **Secondary (Green)**: `secondary-*` - Complementary color (#4CAF50)  
+- **Accent (Navy)**: `accent-*` - Supporting color (#003F5C)
+- **Neutral (Gray)**: `neutral-*` - Text and backgrounds (#F0F0F0 to #171717)
+
+#### Logo & Branding
+- Logo component: `<Logo />` in `src/components/common/Logo.tsx`
+- Features: Open book with growth arrow, available in multiple sizes
+- Brand name: **Designário** 
+- Subtitle: **Observatório de Inovação Social**
+- Favicon: `/favicon.svg` (book + arrow icon)
+
+#### User Type Badge Colors
+- Admin: purple, Coordenador: indigo, Pesquisador: green, Extensionista: blue
+
+## Interactive Maps System
+
+### Map Components & Features
+- **Interactive maps**: Leaflet + OpenStreetMap integration via `react-leaflet`
+- **CaseMap component**: `src/components/common/CaseMap.tsx` - displays case location with impact area
+- **Neighborhood boundaries**: Real neighborhood polygons via Overpass API when available
+- **Geocoding**: ViaCEP (Brazilian postal codes) + Nominatim (OpenStreetMap) for coordinates
+- **Fallback system**: Circle approximation when boundary data unavailable
+
+### Location Data Priority
+1. **CEP (postal code)** → ViaCEP API → Nominatim coordinates
+2. **Bairro + Cidade** → Direct Nominatim search  
+3. **Cidade apenas** → Broad city coordinates
+4. **Fallback**: Rio de Janeiro default coordinates
+
+### Map Features
+- **Markers**: Red pin for project location with popup info
+- **Impact areas**: Blue polygons (real boundaries) or circles (approximated)
+- **Interactive popups**: Case details, impact statistics
+- **Zoom levels**: Auto-adjust based on boundary type (13 for polygons, 14 for circles)
 
 ## Avatar & File Upload System
 
@@ -143,3 +178,22 @@ src/
 ### Storage Permissions
 - Avatar bucket needs policies for user file upload/update
 - File paths use user ID for security: `avatars/{userId}-{timestamp}.ext`
+
+## Page Structure & Components
+
+### Main Pages
+- **Home** (`src/pages/Home.tsx`): Hero section with Rio de Janeiro background image, stats, and bento box case layout
+- **Cases** (`src/pages/Casos.tsx`): Enhanced case listing with visual category filters and pagination
+- **Categories** (`src/pages/Categorias.tsx`): Category overview with recent cases and fixed action buttons
+- **Case Details** (`src/pages/CasoDetalhes.tsx`): Tab-based case viewing with interactive map
+- **Login** (`src/pages/Login.tsx`): Authentication with new Designário branding
+
+### Admin Pages
+- **Case Management** (`src/pages/admin/CaseManagement.tsx`): Full CRUD with icon-based actions
+- **Case Editor** (`src/pages/admin/CaseEditor.tsx`): Tab-based form with CEP integration and social media fields
+- **User Management** (`src/pages/admin/UserManagement.tsx`): Complete admin user interface
+
+### Common Components  
+- **Logo** (`src/components/common/Logo.tsx`): SVG logo with open book + growth arrow
+- **Header** (`src/components/common/Header.tsx`): Navigation with Designário branding
+- **CaseMap** (`src/components/common/CaseMap.tsx`): Interactive neighborhood boundary maps

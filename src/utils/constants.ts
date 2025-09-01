@@ -30,5 +30,6 @@ export const USER_TYPES = {
   COORDENADOR: 'coordenador',
 } as const;
 
-export const APP_NAME = 'Observatório de Inovação Social - RJ';
+export const APP_NAME = 'Designário';
+export const APP_SUBTITLE = 'Observatório de Inovação Social';
 export const APP_DESCRIPTION = 'Plataforma digital para catalogar, visualizar e promover casos de inovação social no Rio de Janeiro';
