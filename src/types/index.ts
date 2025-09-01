@@ -2,7 +2,7 @@ export interface User {
   id: string;
   email: string;
   nome: string;
-  tipo: 'admin' | 'extensionista' | 'pesquisador' | 'coordenador';
+  tipo: 'admin' | 'extensionista' | 'pesquisador' | 'coordenador' | 'demo';
   instituicao?: string;
   telefone?: string;
   bio?: string;
@@ -11,6 +11,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   data_criacao?: string; // Para compatibilidade
+  isDemo?: boolean; // Flag para identificar usuário de demonstração
 }
 
 export interface CasoInovacao {
@@ -58,9 +59,35 @@ export interface CasoInovacao {
   extensionista?: User;
 }
 
+export interface ContactMessage {
+  id: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  assunto: string;
+  mensagem: string;
+  tipo_solicitacao: 'acesso' | 'duvida' | 'sugestao' | 'outro';
+  status: 'pendente' | 'lido' | 'respondido';
+  respondido_por?: string;
+  resposta?: string;
+  created_at: string;
+  updated_at: string;
+  extensionista?: User; // Para quando carregamos dados do extensionista que respondeu
+}
+
+export interface ContactMessageInput {
+  nome: string;
+  email: string;
+  telefone?: string;
+  assunto: string;
+  mensagem: string;
+  tipo_solicitacao: 'acesso' | 'duvida' | 'sugestao' | 'outro';
+}
+
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInDemo: () => Promise<void>;
   signOut: () => Promise<void>;
 }

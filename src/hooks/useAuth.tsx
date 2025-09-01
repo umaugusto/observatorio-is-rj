@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase, getOrCreateUser } from '../services/supabase';
+import { supabase, getOrCreateUser, setDemoMode } from '../services/supabase';
+import { demoUser } from '../services/demoData';
 import type { User, AuthContextType } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -115,7 +116,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('📊 signIn: Session data:', data.session?.user?.id);
   };
 
+  const signInDemo = async () => {
+    console.log('🎭 signInDemo: Iniciando modo demonstração');
+    setLoading(true);
+    
+    try {
+      // Simular delay de autenticação
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Ativar modo demo
+      setDemoMode(true);
+      
+      // Definir usuário de demonstração
+      setUser(demoUser);
+      console.log('✅ signInDemo: Modo demo ativado para:', demoUser.nome);
+    } catch (error) {
+      console.error('❌ signInDemo: Erro no modo demo:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signOut = async () => {
+    // Se for usuário demo, fazer logout direto
+    if (user?.isDemo) {
+      console.log('🎭 signOut: Saindo do modo demo');
+      setDemoMode(false);
+      setUser(null);
+      return;
+    }
+    
+    // Logout normal do Supabase
+    setDemoMode(false);
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
@@ -124,6 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     loading,
     signIn,
+    signInDemo,
     signOut,
   };
 

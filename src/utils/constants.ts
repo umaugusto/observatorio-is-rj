@@ -5,6 +5,7 @@ export const ROUTES = {
   MAPA: '/mapa',
   SOBRE: '/sobre',
   CONTATO: '/contato',
+  MESSAGES: '/mensagens',
   LOGIN: '/login',
   PROFILE: '/perfil',
   ADMIN_USERS: '/admin/usuarios',
@@ -28,6 +29,20 @@ export const USER_TYPES = {
   EXTENSIONISTA: 'extensionista',
   PESQUISADOR: 'pesquisador',
   COORDENADOR: 'coordenador',
+} as const;
+
+export const CONTACT_TYPES = {
+  ACESSO: 'acesso',
+  DUVIDA: 'duvida',
+  SUGESTAO: 'sugestao',
+  OUTRO: 'outro',
+} as const;
+
+export const CONTACT_TYPES_LABELS = {
+  acesso: 'Solicitar Acesso',
+  duvida: 'Dúvida',
+  sugestao: 'Sugestão',
+  outro: 'Outro',
 } as const;
 
 export const APP_NAME = 'Designário';

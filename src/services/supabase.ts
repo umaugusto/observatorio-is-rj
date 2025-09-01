@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import type { User, CasoInovacao } from '../types';
+import type { User, CasoInovacao, ContactMessage, ContactMessageInput } from '../types';
+import { DemoInterceptor } from './demoInterceptor';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -16,6 +17,30 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true
   }
 });
+
+// Helper function to check if current user is in demo mode
+const isDemoMode = (): boolean => {
+  // Check if there's a demo user in localStorage or session
+  try {
+    const demoFlag = localStorage.getItem('demo-mode');
+    return demoFlag === 'true';
+  } catch {
+    return false;
+  }
+};
+
+// Set demo mode flag
+export const setDemoMode = (isDemo: boolean): void => {
+  try {
+    if (isDemo) {
+      localStorage.setItem('demo-mode', 'true');
+    } else {
+      localStorage.removeItem('demo-mode');
+    }
+  } catch (error) {
+    console.error('Error setting demo mode:', error);
+  }
+};
 
 // Database interfaces matching Supabase tables
 export interface DatabaseUser {
@@ -73,6 +98,9 @@ export interface DatabaseCasoInovacao {
 
 // Database functions
 export const getCasos = async (): Promise<CasoInovacao[]> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.getCasos();
+  }
   const { data, error } = await supabase
     .from('casos_inovacao')
     .select(`
@@ -114,6 +142,9 @@ export const getCasos = async (): Promise<CasoInovacao[]> => {
 };
 
 export const getCasosByCategory = async (categoria: string): Promise<CasoInovacao[]> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.getCasosByCategory(categoria);
+  }
   const { data, error } = await supabase
     .from('casos_inovacao')
     .select(`
@@ -271,6 +302,9 @@ export const getOrCreateUser = async (authUser: any): Promise<User | null> => {
 
 // Funções para gerenciamento de usuários (admin)
 export const getAllUsers = async (): Promise<User[]> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.getAllUsers();
+  }
   console.log('📋 getAllUsers: Buscando todos os usuários...');
   
   const { data, error } = await supabase
@@ -292,6 +326,9 @@ export const getAllUsers = async (): Promise<User[]> => {
 };
 
 export const createNewUser = async (userData: Omit<User, 'id' | 'created_at' | 'updated_at' | 'data_criacao'>): Promise<User> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.createNewUser(userData);
+  }
   console.log('🆕 createNewUser: Criando usuário:', userData.email);
   
   const { data, error } = await supabase
@@ -314,6 +351,9 @@ export const createNewUser = async (userData: Omit<User, 'id' | 'created_at' | '
 };
 
 export const updateUser = async (userId: string, updates: Partial<User>): Promise<User> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.updateUser(userId, updates);
+  }
   console.log('✏️ updateUser: Atualizando usuário:', userId);
   
   // Remove campos que não devem ser atualizados
@@ -344,6 +384,9 @@ export const updateUser = async (userId: string, updates: Partial<User>): Promis
 };
 
 export const deleteUser = async (userId: string): Promise<void> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.deleteUser(userId);
+  }
   console.log('🗑️ deleteUser: Removendo usuário:', userId);
   
   const { error } = await supabase
@@ -360,6 +403,11 @@ export const deleteUser = async (userId: string): Promise<void> => {
 };
 
 export const toggleUserStatus = async (userId: string, ativo: boolean): Promise<User> => {
+  if (isDemoMode()) {
+    await DemoInterceptor.toggleUserStatus(userId);
+    const user = await DemoInterceptor.getUser(userId);
+    return user || {} as User;
+  }
   console.log('🔄 toggleUserStatus: Alterando status do usuário:', userId, 'para', ativo);
   
   const { data, error } = await supabase
@@ -399,6 +447,9 @@ export const resetUserPassword = async (email: string): Promise<void> => {
 
 // Funções para gerenciamento de avatares
 export const uploadAvatar = async (userId: string, file: File): Promise<string> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.uploadAvatar(userId, file);
+  }
   console.log('📸 uploadAvatar: Fazendo upload de avatar para usuário:', userId);
   
   // Validar arquivo
@@ -456,6 +507,9 @@ export const uploadAvatar = async (userId: string, file: File): Promise<string> 
 
 // Nova função apenas para upload sem atualizar banco
 export const uploadAvatarOnly = async (file: File, userId?: string): Promise<string> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.uploadAvatarOnly(file);
+  }
   console.log('📸 uploadAvatarOnly: Fazendo upload de avatar');
   
   // Validar arquivo
@@ -496,6 +550,9 @@ export const uploadAvatarOnly = async (file: File, userId?: string): Promise<str
 };
 
 export const deleteAvatar = async (userId: string, currentAvatarUrl?: string): Promise<void> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.deleteAvatar(userId, currentAvatarUrl);
+  }
   console.log('🗑️ deleteAvatar: Removendo avatar do usuário:', userId);
   
   // Extrair caminho do arquivo da URL se fornecida
@@ -577,6 +634,9 @@ export const getAllCasos = async (): Promise<CasoInovacao[]> => {
 };
 
 export const getCasoById = async (casoId: string): Promise<CasoInovacao | null> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.getCasoById(casoId);
+  }
   console.log('🔍 getCasoById: Buscando caso com ID:', casoId);
   
   const { data, error } = await supabase
@@ -802,4 +862,120 @@ export const deleteCaseImage = async (imageUrl: string): Promise<void> => {
   }
   
   console.log('✅ deleteCaseImage: Imagem removida com sucesso');
+};
+
+// ========================== CONTACT MESSAGES ==========================
+
+export const createContactMessage = async (messageData: ContactMessageInput): Promise<ContactMessage> => {
+  if (isDemoMode()) {
+    await DemoInterceptor.createContactMessage(messageData);
+    // Return a mock response since demo doesn't actually create
+    return {
+      id: `demo-msg-${Date.now()}`,
+      ...messageData,
+      status: 'pendente' as const,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  }
+  console.log('📬 createContactMessage: Criando mensagem de contato de:', messageData.email);
+  
+  const { data, error } = await supabase
+    .from('mensagens_contato')
+    .insert([{
+      ...messageData,
+      status: 'pendente'
+    }])
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('❌ createContactMessage: Erro ao criar mensagem:', error);
+    throw error;
+  }
+
+  console.log('✅ createContactMessage: Mensagem criada com sucesso:', data.assunto);
+  return data;
+};
+
+export const getAllMessages = async (): Promise<ContactMessage[]> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.getAllMessages();
+  }
+  console.log('📋 getAllMessages: Buscando todas as mensagens de contato');
+  
+  const { data, error } = await supabase
+    .from('mensagens_contato')
+    .select(`
+      *,
+      extensionista:usuarios!mensagens_contato_respondido_por_fkey(*)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('❌ getAllMessages: Erro ao buscar mensagens:', error);
+    throw error;
+  }
+
+  console.log('✅ getAllMessages: Encontradas', data.length, 'mensagens');
+  return data || [];
+};
+
+export const updateMessageStatus = async (messageId: string, status: 'lido' | 'respondido', userId?: string, resposta?: string): Promise<ContactMessage> => {
+  if (isDemoMode()) {
+    await DemoInterceptor.updateMessageStatus(messageId, status);
+    // Return mock updated message
+    const messages = await DemoInterceptor.getAllMessages();
+    return messages.find(m => m.id === messageId) || {} as ContactMessage;
+  }
+  console.log('✏️ updateMessageStatus: Atualizando status da mensagem:', messageId, 'para', status);
+  
+  const updateData: any = { status };
+  
+  if (userId) {
+    updateData.respondido_por = userId;
+  }
+  
+  if (resposta) {
+    updateData.resposta = resposta;
+  }
+  
+  const { data, error } = await supabase
+    .from('mensagens_contato')
+    .update(updateData)
+    .eq('id', messageId)
+    .select(`
+      *,
+      extensionista:usuarios!mensagens_contato_respondido_por_fkey(*)
+    `)
+    .single();
+
+  if (error) {
+    console.error('❌ updateMessageStatus: Erro ao atualizar status:', error);
+    throw error;
+  }
+
+  console.log('✅ updateMessageStatus: Status atualizado com sucesso');
+  return data;
+};
+
+export const getUnreadMessagesCount = async (): Promise<number> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.getUnreadMessagesCount();
+  }
+  console.log('🔍 getUnreadMessagesCount: Contando mensagens não lidas');
+  
+  const { count, error } = await supabase
+    .from('mensagens_contato')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'pendente');
+
+  if (error) {
+    console.error('❌ getUnreadMessagesCount: Erro ao contar mensagens:', error);
+    throw error;
+  }
+
+  const unreadCount = count || 0;
+  console.log('✅ getUnreadMessagesCount:', unreadCount, 'mensagens não lidas');
+  return unreadCount;
 };

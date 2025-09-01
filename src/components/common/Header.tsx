@@ -4,11 +4,13 @@ import { useAuth } from '../../hooks/useAuth';
 import { Avatar } from './Avatar';
 import { Logo } from './Logo';
 import { ROUTES } from '../../utils/constants';
+import { getUnreadMessagesCount } from '../../services/supabase';
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
@@ -30,6 +32,30 @@ export const Header = () => {
     navigate(ROUTES.PROFILE);
     setDropdownOpen(false);
   };
+
+  const handleMessages = () => {
+    navigate(ROUTES.MESSAGES);
+    setDropdownOpen(false);
+  };
+
+  // Carregar contagem de mensagens não lidas
+  const loadUnreadCount = async () => {
+    if (user && ['admin', 'extensionista', 'coordenador', 'pesquisador'].includes(user.tipo)) {
+      try {
+        const count = await getUnreadMessagesCount();
+        setUnreadCount(count);
+      } catch (error) {
+        console.error('Erro ao carregar contagem de mensagens:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadUnreadCount();
+    // Atualizar contagem a cada 30 segundos
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -106,7 +132,7 @@ export const Header = () => {
                       </svg>
                       <span>Meu Perfil</span>
                     </button>
-                    
+
                     {user.tipo === 'admin' && (
                       <>
                         <button
@@ -130,6 +156,23 @@ export const Header = () => {
                         </button>
                       </>
                     )}
+
+                    <button
+                      onClick={handleMessages}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span>Mensagens</span>
+                      </div>
+                      {unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-5 text-center">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
                     
                     <hr className="my-1" />
                     <button

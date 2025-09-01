@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
+import { DemoBanner } from './components/common/DemoBanner';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Home } from './pages/Home';
 import { Casos } from './pages/Casos';
@@ -9,6 +10,8 @@ import { CasoDetalhes } from './pages/CasoDetalhes';
 import { Categorias } from './pages/Categorias';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
+import { Contato } from './pages/Contato';
+import { Messages } from './pages/Messages';
 import { UserManagement } from './pages/admin/UserManagement';
 import { CaseManagement } from './pages/admin/CaseManagement';
 import { CaseEditor } from './pages/admin/CaseEditor';
@@ -19,6 +22,7 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="min-h-screen flex flex-col">
+          <DemoBanner />
           <Header />
           <main className="flex-1">
             <Routes>
@@ -26,6 +30,7 @@ function App() {
               <Route path={ROUTES.CASOS} element={<Casos />} />
               <Route path="/caso/:id" element={<CasoDetalhes />} />
               <Route path={ROUTES.LOGIN} element={<Login />} />
+              <Route path={ROUTES.CONTATO} element={<Contato />} />
               
               {/* Protected Routes */}
               <Route 
@@ -33,6 +38,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path={ROUTES.MESSAGES} 
+                element={
+                  <ProtectedRoute>
+                    <Messages />
                   </ProtectedRoute>
                 } 
               />
@@ -69,7 +83,6 @@ function App() {
               <Route path="/categorias" element={<Categorias />} />
               <Route path="/mapa" element={<PlaceholderPage title="Mapa" />} />
               <Route path="/sobre" element={<PlaceholderPage title="Sobre" />} />
-              <Route path="/contato" element={<PlaceholderPage title="Contato" />} />
               
               {/* 404 Page */}
               <Route path="*" element={<NotFound />} />

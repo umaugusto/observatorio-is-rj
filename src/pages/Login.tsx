@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Logo } from '../components/common/Logo';
 import { ROUTES } from '../utils/constants';
@@ -10,7 +10,7 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { user, signIn } = useAuth();
+  const { user, signIn, signInDemo } = useAuth();
   const navigate = useNavigate();
 
   // Redirecionar se já estiver logado
@@ -47,12 +47,31 @@ export const Login = () => {
     }
   };
 
+  const handleDemoLogin = async () => {
+    console.log('🎭 Login: Iniciando modo demonstração');
+    setLoading(true);
+    setError(null);
+
+    try {
+      await signInDemo();
+      console.log('✅ Login: Modo demo ativado, navegando para home...');
+      navigate(ROUTES.HOME);
+    } catch (err: any) {
+      console.error('❌ Login: Erro no modo demo:', err);
+      setError('Erro ao entrar no modo demonstração');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <Logo size="lg" showText={true} />
+            <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center">
+              <Logo size="md" showText={false} />
+            </div>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Área do Extensionista
@@ -108,7 +127,7 @@ export const Login = () => {
               </div>
             </div>
 
-            <div>
+            <div className="space-y-3">
               <button
                 type="submit"
                 disabled={loading}
@@ -116,6 +135,26 @@ export const Login = () => {
               >
                 {loading ? 'Entrando...' : 'Entrar'}
               </button>
+              
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                disabled={loading}
+                className="w-full flex justify-center items-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                {loading ? 'Carregando...' : 'Entrar em Demonstração'}
+              </button>
+              
+              <div className="mt-3 text-center">
+                <p className="text-xs text-gray-500">
+                  O modo demonstração permite explorar todas as funcionalidades<br/>
+                  sem fazer alterações no banco de dados.
+                </p>
+              </div>
             </div>
           </form>
 
@@ -132,9 +171,15 @@ export const Login = () => {
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mb-4">
                 Entre em contato com o administrador para criar sua conta de extensionista.
               </p>
+              <Link 
+                to={`${ROUTES.CONTATO}?tipo=acesso`}
+                className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline"
+              >
+                📝 Solicitar acesso como extensionista
+              </Link>
             </div>
           </div>
         </div>

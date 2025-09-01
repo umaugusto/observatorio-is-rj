@@ -260,9 +260,15 @@ export const Home = () => {
         {/* Imagem de fundo do Rio de Janeiro */}
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1544737151-6e4b73628c5a?w=1920&h=1080&fit=crop&crop=center"
+            src="https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=1920&h=1080&fit=crop&crop=center&auto=format"
             alt="Rio de Janeiro - Cristo Redentor"
             className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback se a imagem não carregar
+              const target = e.target as HTMLImageElement;
+              target.style.background = 'linear-gradient(135deg, #E95420 0%, #4CAF50 100%)';
+              target.style.display = 'none';
+            }}
           />
           {/* Overlay com gradiente laranja */}
           <div className="absolute inset-0 bg-gradient-to-r from-primary-600/90 via-primary-500/80 to-secondary-600/70"></div>
