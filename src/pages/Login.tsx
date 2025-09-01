@@ -25,15 +25,28 @@ export const Login = () => {
       return;
     }
 
+    console.log('📝 Login: Iniciando processo de login para:', email);
     setLoading(true);
     setError(null);
 
     try {
+      console.log('🔐 Login: Chamando signIn...');
       await signIn(email, password);
+      
+      console.log('✅ Login: signIn completado, navegando para home...');
       navigate(ROUTES.HOME);
+      
+      // Timeout de segurança
+      setTimeout(() => {
+        if (loading) {
+          console.warn('⏰ Login: Timeout - ainda em loading após 5s');
+          setLoading(false);
+        }
+      }, 5000);
+      
     } catch (err: any) {
+      console.error('❌ Login: Erro capturado:', err);
       setError(err.message || 'Erro ao fazer login');
-    } finally {
       setLoading(false);
     }
   };

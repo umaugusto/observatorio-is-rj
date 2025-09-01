@@ -104,6 +104,8 @@ export const getCasosByCategory = async (categoria: string): Promise<CasoInovaca
 };
 
 export const getUser = async (userId: string): Promise<User | null> => {
+  console.log('🔍 getUser: Buscando usuário com ID:', userId);
+  
   const { data, error } = await supabase
     .from('usuarios')
     .select('*')
@@ -111,13 +113,75 @@ export const getUser = async (userId: string): Promise<User | null> => {
     .single();
 
   if (error) {
-    console.error('Erro ao buscar usuário:', error);
-    return null;
+    console.error('❌ getUser: Erro ao buscar usuário:', error);
+    console.error('❌ getUser: Código do erro:', error.code);
+    console.error('❌ getUser: Mensagem:', error.message);
+    
+    // Se o erro for "row not found", é diferente de erro de conexão
+    if (error.code === 'PGRST116') {
+      console.warn('⚠️ getUser: Usuário não encontrado na tabela usuarios. Isso pode ser normal.');
+      return null;
+    }
+    
+    throw error; // Re-throw outros erros
   }
+  
+  console.log('✅ getUser: Usuário encontrado:', { id: data.id, email: data.email, tipo: data.tipo });
   
   // Mapear dados para manter compatibilidade
   return data ? {
     ...data,
     data_criacao: data.created_at // Para compatibilidade
   } : null;
+};
+
+// Nova função para criar usuário automaticamente se não existir
+export const createUserFromAuth = async (authUser: any): Promise<User> => {
+  console.log('🆕 createUserFromAuth: Criando usuário para:', authUser.email);
+  
+  const userData = {
+    id: authUser.id,
+    email: authUser.email,
+    nome: authUser.email.split('@')[0] || 'Usuário',
+    tipo: 'extensionista' as const,
+    instituicao: authUser.email.includes('@') ? authUser.email.split('@')[1] : null,
+    ativo: true
+  };
+
+  const { data, error } = await supabase
+    .from('usuarios')
+    .insert([userData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('❌ createUserFromAuth: Erro ao criar usuário:', error);
+    throw error;
+  }
+
+  console.log('✅ createUserFromAuth: Usuário criado com sucesso:', data.email);
+  
+  return {
+    ...data,
+    data_criacao: data.created_at
+  };
+};
+
+// Função para obter ou criar usuário
+export const getOrCreateUser = async (authUser: any): Promise<User | null> => {
+  try {
+    // Primeiro tenta buscar o usuário existente
+    const existingUser = await getUser(authUser.id);
+    if (existingUser) {
+      return existingUser;
+    }
+    
+    // Se não encontrar, cria automaticamente
+    console.log('👤 getOrCreateUser: Usuário não existe, criando automaticamente...');
+    return await createUserFromAuth(authUser);
+    
+  } catch (error) {
+    console.error('❌ getOrCreateUser: Erro geral:', error);
+    return null;
+  }
 };
