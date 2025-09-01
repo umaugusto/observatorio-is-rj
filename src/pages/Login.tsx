@@ -33,16 +33,11 @@ export const Login = () => {
       console.log('🔐 Login: Chamando signIn...');
       await signIn(email, password);
       
-      console.log('✅ Login: signIn completado, navegando para home...');
-      navigate(ROUTES.HOME);
+      console.log('✅ Login: signIn completado, resetando loading...');
+      setLoading(false);
       
-      // Timeout de segurança
-      setTimeout(() => {
-        if (loading) {
-          console.warn('⏰ Login: Timeout - ainda em loading após 5s');
-          setLoading(false);
-        }
-      }, 5000);
+      console.log('🚀 Login: Navegando para home...');
+      navigate(ROUTES.HOME);
       
     } catch (err: any) {
       console.error('❌ Login: Erro capturado:', err);

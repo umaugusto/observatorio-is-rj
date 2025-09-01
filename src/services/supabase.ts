@@ -106,33 +106,64 @@ export const getCasosByCategory = async (categoria: string): Promise<CasoInovaca
 export const getUser = async (userId: string): Promise<User | null> => {
   console.log('🔍 getUser: Buscando usuário com ID:', userId);
   
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  // Criar uma Promise com timeout
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      console.error('⏰ getUser: TIMEOUT após 10 segundos');
+      reject(new Error('Timeout: Query demorou mais de 10 segundos'));
+    }, 10000);
+  });
 
-  if (error) {
-    console.error('❌ getUser: Erro ao buscar usuário:', error);
-    console.error('❌ getUser: Código do erro:', error.code);
-    console.error('❌ getUser: Mensagem:', error.message);
+  try {
+    console.log('🚀 getUser: Iniciando query no Supabase...');
     
-    // Se o erro for "row not found", é diferente de erro de conexão
-    if (error.code === 'PGRST116') {
-      console.warn('⚠️ getUser: Usuário não encontrado na tabela usuarios. Isso pode ser normal.');
-      return null;
+    const queryPromise = supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    console.log('⏳ getUser: Query criada, aguardando resposta...');
+    
+    // Race entre a query e o timeout
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+    
+    console.log('📦 getUser: Resposta recebida do Supabase');
+    console.log('📊 getUser: Data:', data ? 'existe' : 'null');
+    console.log('❌ getUser: Error:', error ? error.code + ': ' + error.message : 'null');
+
+    if (error) {
+      console.error('❌ getUser: Erro ao buscar usuário:', error);
+      console.error('❌ getUser: Código do erro:', error.code);
+      console.error('❌ getUser: Mensagem:', error.message);
+      
+      // Se o erro for "row not found", é diferente de erro de conexão
+      if (error.code === 'PGRST116') {
+        console.warn('⚠️ getUser: Usuário não encontrado na tabela usuarios. Isso pode ser normal.');
+        return null;
+      }
+      
+      throw error; // Re-throw outros erros
     }
     
-    throw error; // Re-throw outros erros
+    console.log('✅ getUser: Usuário encontrado:', { id: data.id, email: data.email, tipo: data.tipo });
+    
+    // Mapear dados para manter compatibilidade
+    return data ? {
+      ...data,
+      data_criacao: data.created_at // Para compatibilidade
+    } : null;
+    
+  } catch (error: any) {
+    console.error('💥 getUser: Erro capturado na função:', error);
+    
+    if (error.message?.includes('Timeout')) {
+      console.error('⏰ getUser: Query demorou muito - possível problema de conexão');
+      throw new Error('Problema de conexão com o banco de dados');
+    }
+    
+    throw error;
   }
-  
-  console.log('✅ getUser: Usuário encontrado:', { id: data.id, email: data.email, tipo: data.tipo });
-  
-  // Mapear dados para manter compatibilidade
-  return data ? {
-    ...data,
-    data_criacao: data.created_at // Para compatibilidade
-  } : null;
 };
 
 // Nova função para criar usuário automaticamente se não existir
