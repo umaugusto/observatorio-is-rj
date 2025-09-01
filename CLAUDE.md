@@ -1,61 +1,125 @@
-- 🎯 Objetivo
-Criar um observatório digital para catalogar, visualizar e promover casos de inovação social no Rio de Janeiro, conectando extensionistas universitários com iniciativas de impacto social.
-- 🏗 Arquitetura Técnica
+# CLAUDE.md
 
-Frontend: React (via Claude Code)
-Backend/Database: Supabase
-Autenticação: Supabase Auth
-Deploy: Netlify
-Desenvolvimento: VS Code + Claude Code
-Controle: Git + GitHub
-- 👥 Usuários do Sistema
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Admin: Usuário root que gerencia extensionistas
-Extensionistas: Cadastram e gerenciam casos de inovação social
-Visitantes: Consultam casos publicamente (sem login)
+## Project Overview
 
-# Configurações do Projeto - Observatório de Inovação Social RJ
+The Observatório de Inovação Social do Rio de Janeiro (Social Innovation Observatory of Rio de Janeiro) is a digital platform for cataloging, visualizing, and promoting social innovation cases in Rio de Janeiro state. It connects university extension workers with social impact initiatives.
 
-## 🔐 **Credenciais Supabase**
+**Tech Stack**: React 18 + TypeScript + Vite + Tailwind CSS + Supabase + Netlify
 
-### **Project URL**
-```
-https://vpdtoxesovtplyowquyh.supabase.co
-```
+**User Roles**:
+- **Visitors**: Public access to browse cases
+- **Extensionistas**: University extension workers who can manage their own cases  
+- **Admins**: System administrators who manage users and all cases
 
-### **Anon Key** (para frontend)
-```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwZHRveGVzb3Z0cGx5b3dxdXloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2ODk4ODgsImV4cCI6MjA3MjI2NTg4OH0.88ILT7YBuC492W8l0A77N6Qi9YrdgfY8zyAPz0M9ynI
-```
+## Development Commands
 
-### **Service Role Key** (apenas servidor - não expor)
-```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwZHRveGVzb3Z0cGx5b3dxdXloIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjY4OTg4OCwiZXhwIjoyMDcyMjY1ODg4fQ.TSNfIPtJT_w1PSoajuO3CtgmVCdXmj1wuoLQWQB4CMc
+```bash
+# Development
+npm install                 # Install dependencies
+npm run dev                # Start development server (Vite)
+npm run build              # Production build (TypeScript check + Vite build)
+npm run preview            # Preview production build
+npm run lint               # ESLint check
+
+# Environment
+# .env.local file is already configured with Supabase credentials
+# Uses VITE_ prefix for environment variables
 ```
 
-## 🌐 **Deploy**
+## Architecture & Key Patterns
 
-### **Netlify Site**
+### Authentication & Data Flow
+- **Authentication**: Supabase Auth with custom user profiles in `usuarios` table
+- **Data Layer**: All Supabase operations centralized in `src/services/supabase.ts`
+- **Auth Context**: `src/hooks/useAuth.tsx` provides `AuthProvider` and `useAuth()` hook
+- **User Types**: Enforced through `tipo` field ('admin' | 'extensionista') with role-based access
+
+### Database Schema (Supabase)
+```sql
+-- Core tables (need to be created in Supabase)
+usuarios: id, email, nome, tipo, data_criacao
+casos_inovacao: id, titulo, descricao, localizacao, categoria, extensionista_id, 
+                imagem_url, coordenadas_mapa, data_cadastro, status_ativo
 ```
-https://observatorio-is-rj.netlify.app
+
+### Component Architecture
+```
+src/
+├── components/
+│   ├── common/              # Shared UI (Header, Footer, Loading)
+│   ├── auth/                # Authentication components
+│   └── casos/               # Case-specific components (CaseCard)
+├── pages/                   # Route components (Home, Casos, Login)
+├── hooks/useAuth.tsx        # Authentication context & hook
+├── services/supabase.ts     # Database operations & Supabase client
+├── types/index.ts           # TypeScript interfaces
+└── utils/constants.ts       # App constants (routes, categories)
 ```
 
-## 📝 **Variáveis de Ambiente (.env.local)**
-```env
-REACT_APP_SUPABASE_URL=https://vpdtoxesovtplyowquyh.supabase.co
-REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwZHRveGVzb3Z0cGx5b3dxdXloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY2ODk4ODgsImV4cCI6MjA3MjI2NTg4OH0.88ILT7YBuC492W8l0A77N6Qi9YrdgfY8zyAPz0M9ynI
+### Styling System
+- **Framework**: Tailwind CSS with custom configuration
+- **Custom Classes**: `container-custom`, `btn-primary`, `btn-secondary`, `card`
+- **Color Palette**: `primary-*`, `gray-*`, `red-*`, `green-*` scales
+- **Responsive**: Mobile-first approach (base → sm: → md: → lg:)
+- **Typography**: Inter font family loaded via Google Fonts
+
+### Key Service Functions
+```typescript
+// src/services/supabase.ts
+getCasos()                    // Fetch all active cases with extensionista data
+getCasosByCategory(categoria) // Filter cases by category
+getUser(userId)               // Get user profile data
+
+// Authentication (via useAuth hook)
+signIn(email, password)       // Login
+signOut()                     // Logout
 ```
 
-## ⚠️ **Segurança**
-- **Anon Key**: Pode ser exposta no frontend
-- **Service Key**: NUNCA expor no frontend ou commits públicos
-- **Arquivo .env.local**: Adicionar no .gitignore
+### Routing Structure
+- **Public Routes**: `/` (Home), `/casos` (Cases), `/login`
+- **Protected Routes**: Authentication handled via `useAuth()` context
+- **Placeholder Routes**: `/categorias`, `/mapa`, `/sobre`, `/contato` (show placeholder page)
+- **SPA Routing**: React Router with catch-all redirect configured in `netlify.toml`
 
-## 🎯 **Status do Projeto**
-- ✅ Supabase configurado
-- ✅ Netlify conectado
-- ⏳ Aguardando criação do projeto React
-- ⏳ Aguardando primeiro deploy
+## Environment Configuration
+
+**Development**: 
+- Variables in `.env.local` (already configured)
+- Uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+
+**Production**: 
+- Environment variables configured in `netlify.toml`
+- Automatic deploy on push to main branch
+- Build command: `npm run build`, Publish directory: `dist`
+
+## Development Guidelines
+
+### TypeScript Requirements
+- Always use `.tsx` extensions for React components
+- Strict TypeScript configuration with `noUnusedLocals` and `noUnusedParameters`
+- All props must be typed with interfaces
+- Use existing interfaces in `src/types/index.ts`
+
+### Component Standards  
+- Functional components only with hooks
+- One component per file with default export
+- Import order: types first, then React, libraries, then local imports
+- Error boundaries and loading states for async operations
+
+### Supabase Integration
+- Row Level Security (RLS) should be configured on database tables
+- Always handle Supabase errors appropriately
+- Use `supabase.auth` for authentication, custom `usuarios` table for profiles
+- Never expose service_role key in frontend code
+
+### Code Quality
+- ESLint must pass with zero warnings for production builds  
+- TypeScript compilation must succeed
+- Follow existing naming conventions and file structure
+- Use existing Tailwind utility classes rather than custom CSS
+
 
 # 📋 Instruções Gerais - Observatório de Inovação Social RJ
 

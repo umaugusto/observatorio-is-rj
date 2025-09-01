@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getCasos } from '../services/supabase';
+import { checkDatabaseSetup } from '../services/database-setup';
 import { CaseCard } from '../components/casos/CaseCard';
+import { DatabaseSetup } from '../components/setup/DatabaseSetup';
 import { ROUTES, APP_NAME } from '../utils/constants';
 import type { CasoInovacao } from '../types';
 
@@ -9,22 +11,69 @@ export const Home = () => {
   const [casos, setCasos] = useState<CasoInovacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dbConfigured, setDbConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const loadCasos = async () => {
-      try {
-        const data = await getCasos();
-        setCasos(data.slice(0, 6)); // Mostrar apenas os 6 mais recentes
-      } catch (err) {
-        setError('Erro ao carregar casos de inovação');
-        console.error(err);
-      } finally {
+    checkDatabase();
+  }, []);
+
+  const checkDatabase = async () => {
+    try {
+      const status = await checkDatabaseSetup();
+      setDbConfigured(status.isConfigured);
+      
+      if (status.isConfigured) {
+        await loadCasos();
+      } else {
         setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Erro ao verificar banco:', err);
+      setDbConfigured(false);
+      setLoading(false);
+    }
+  };
 
+  const loadCasos = async () => {
+    try {
+      const data = await getCasos();
+      setCasos(data.slice(0, 6)); // Mostrar apenas os 6 mais recentes
+      setError(null);
+    } catch (err: any) {
+      // Se o erro for de tabela não encontrada, mostrar setup
+      if (err.message?.includes('relation') || err.code === '42P01') {
+        setDbConfigured(false);
+      } else {
+        setError('Erro ao carregar casos de inovação');
+      }
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetupComplete = () => {
+    setDbConfigured(true);
+    setLoading(true);
     loadCasos();
-  }, []);
+  };
+
+  // Se o banco não estiver configurado, mostrar tela de setup
+  if (dbConfigured === false) {
+    return <DatabaseSetup onSetupComplete={handleSetupComplete} />;
+  }
+
+  // Loading inicial enquanto verifica o banco
+  if (dbConfigured === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Verificando configuração...</p>
+        </div>
+      </div>
+    );
+  }
 
   const casosStats = {
     total: casos.length,

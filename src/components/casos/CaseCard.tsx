@@ -31,7 +31,9 @@ export const CaseCard = ({ caso, onClick }: CaseCardProps) => {
             {caso.categoria}
           </span>
           <span className="text-gray-500 text-sm">
-            {new Date(caso.data_cadastro).toLocaleDateString('pt-BR')}
+            {caso.data_cadastro || caso.created_at 
+              ? new Date(caso.data_cadastro || caso.created_at).toLocaleDateString('pt-BR')
+              : 'Data não disponível'}
           </span>
         </div>
         
