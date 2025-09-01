@@ -53,18 +53,18 @@ export const UserManagement = () => {
     }
   };
 
-  // Redefinir senha para padrão
-  const handleResetPassword = async (userId: string, userName: string) => {
-    if (!confirm(`Redefinir senha de "${userName}" para a senha padrão (12345678)? O usuário será obrigado a alterar no próximo login.`)) {
+  // Enviar email de reset de senha
+  const handleResetPassword = async (userId: string, userName: string, userEmail: string) => {
+    if (!confirm(`Enviar email de redefinição de senha para "${userName}" (${userEmail})?`)) {
       return;
     }
 
     try {
-      await resetToDefaultPassword(userId);
-      alert(`Senha de "${userName}" redefinida para senha padrão. O usuário deve alterar no próximo login.`);
+      await resetToDefaultPassword(userId, userEmail);
+      alert(`Email de redefinição de senha enviado para ${userEmail}. O usuário receberá instruções para criar uma nova senha.`);
       await loadUsers(); // Recarregar lista
     } catch (err: any) {
-      setError('Erro ao redefinir senha: ' + err.message);
+      setError('Erro ao enviar email de reset: ' + err.message);
     }
   };
 
@@ -210,9 +210,9 @@ export const UserManagement = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleResetPassword(user.id, user.nome)}
+                          onClick={() => handleResetPassword(user.id, user.nome, user.email)}
                           className="inline-flex items-center justify-center w-8 h-8 text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 rounded-full transition-colors"
-                          title="Redefinir senha para padrão (12345678)"
+                          title="Enviar email de redefinição de senha"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />

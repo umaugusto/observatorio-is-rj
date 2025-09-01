@@ -22,7 +22,8 @@ npm run preview            # Preview production build
 
 ### Authentication Flow
 - **Supabase Auth** → **Custom usuarios table** → **useAuth hook**
-- User types: `admin` | `extensionista` | `pesquisador` | `coordenador` (stored in `usuarios.tipo`)
+- User types: `extensionista` | `pesquisador` | `coordenador` | `demo` (stored in `usuarios.tipo`)
+- Permission flags: `is_admin` (boolean) and `is_root` (boolean) for administrative access
 - Auth context in `src/hooks/useAuth.tsx` wraps entire app with optimized session persistence
 - Supabase client configured with `persistSession: true` and `autoRefreshToken: true`
 - Login redirects handled automatically via `useAuth()` state
@@ -40,9 +41,13 @@ npm run preview            # Preview production build
 ```typescript
 // src/types/index.ts
 User: { 
-  id, email, nome, tipo: 'admin' | 'extensionista' | 'pesquisador' | 'coordenador' | 'demo',
-  instituicao?, telefone?, bio?, avatar_url?: string | null, ativo, must_change_password?, 
-  isDemo?, created_at, updated_at
+  id, email, nome, 
+  tipo: 'extensionista' | 'pesquisador' | 'coordenador' | 'demo',
+  is_admin?: boolean,    // Administrative permissions
+  is_root?: boolean,      // Root user (can manage admins)
+  instituicao?, telefone?, bio?, avatar_url?: string | null, 
+  ativo, must_change_password?, isDemo?, 
+  created_at, updated_at
 }
 CasoInovacao: { 
   id, titulo, descricao, resumo?, localizacao, categoria, subcategoria?,
@@ -220,11 +225,12 @@ src/
 4. **Password validation**: Cannot use default password `12345678`, minimum 8 characters
 5. **After successful change** → `must_change_password = false` → normal access granted
 
-### Password Reset Flow
+### Password Reset Flow  
 1. **Admin clicks reset button** for user → confirms with warning dialog
-2. **System resets password** to `12345678` + sets `must_change_password = true`
-3. **User notified** to change password on next login
-4. **Emergency Setup**: `/emergency-setup` creates root admin if access issues occur
+2. **System sends password reset email** via Supabase Auth
+3. **User receives email** with secure reset link
+4. **User clicks link** → redirected to password reset page
+5. **Emergency Setup**: `/emergency-setup` creates root admin if access issues occur
 
 ### Key Components
 - **PasswordChangeGuard**: Wraps entire app, intercepts users needing password change
@@ -287,4 +293,39 @@ src/
 - **create-admin-users.sql**: SQL script for bulk admin user creation
 - **EmergencySetup.tsx**: Admin account recovery interface
 - **PasswordChangeGuard.tsx**: Password change enforcement component
-- o dominio é https://observatorio-is-rj.netlify.app/login
+
+## Production Information
+
+### URLs
+- **Application**: https://observatorio-is-rj.netlify.app
+- **Emergency Setup**: https://observatorio-is-rj.netlify.app/emergency-setup
+- **Login**: https://observatorio-is-rj.netlify.app/login
+
+### Deployment
+- **Platform**: Netlify
+- **Auto-deploy**: Pushes to `main` branch trigger automatic deployment
+- **Environment Variables**: Configured in Netlify dashboard (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
+
+## User Creation Guide
+
+### Manual User Creation (Supabase Dashboard)
+1. Go to Supabase Dashboard → Authentication → Users
+2. Click "Invite User" button
+3. Enter user email
+4. User receives email with setup link
+5. Add user to `usuarios` table with appropriate `tipo` and permissions
+
+### Admin-Created Users (In-App)
+1. Admin navigates to `/admin/usuarios`
+2. Click "Novo Usuário" button
+3. Fill in user details
+4. Choose password option:
+   - Default password (12345678) with forced change
+   - Custom password
+5. User logs in and changes password if required
+
+### Emergency Root User Recovery
+1. Navigate to `/emergency-setup`
+2. Create root user with email and password
+3. User automatically has `is_admin: true` and `is_root: true`
+4. Use only when no admin access available

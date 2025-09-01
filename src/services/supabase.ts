@@ -408,71 +408,71 @@ export const createUserWithPassword = async (userData: {
   console.log('🔑 createUserWithPassword: Criando usuário:', userData.email);
   console.log('🔐 Usando senha:', isDefaultPassword ? 'padrão (12345678)' : 'personalizada');
   
-  try {
-    // 1. Criar usuário no Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: userData.email,
-      password: password,
-      email_confirm: true // Auto-confirma o email
-    });
+  // Como não temos Service Role Key no frontend, vamos retornar instruções
+  console.log('⚠️ createUserWithPassword: Não é possível criar usuário diretamente do frontend');
+  
+  // Gerar instruções SQL para o administrador
+  const sqlInstructions = `
+-- Instruções para criar o usuário "${userData.nome}":
 
-    if (authError) {
-      console.error('❌ Erro ao criar usuário no Auth:', authError);
-      throw authError;
-    }
+-- 1. Primeiro, crie o usuário no Supabase Dashboard:
+--    Authentication > Users > Create User
+--    Email: ${userData.email}
+--    Password: ${password}
 
-    if (!authData.user) {
-      throw new Error('Usuário criado no Auth mas dados não retornados');
-    }
+-- 2. Depois, execute este SQL para adicionar na tabela usuarios:
+-- (Substitua 'ID_DO_USUARIO' pelo ID gerado no passo 1)
 
-    // 2. Criar usuário na tabela usuarios
-    const userRecord = {
-      id: authData.user.id,
-      email: userData.email,
-      nome: userData.nome,
-      tipo: userData.tipo,
-      is_admin: userData.is_admin ?? false,
-      is_root: false, // Nunca criar root por esta função
-      ativo: userData.ativo ?? true,
-      // Se não forneceu senha ou explicitamente pediu, forçar troca
-      must_change_password: userData.must_change_password ?? isDefaultPassword,
-      instituicao: userData.instituicao,
-      telefone: userData.telefone,
-      bio: userData.bio,
-      avatar_url: userData.avatar_url
-    };
+INSERT INTO usuarios (
+  id,
+  email,
+  nome,
+  tipo,
+  is_admin,
+  is_root,
+  ativo,
+  instituicao,
+  telefone,
+  bio,
+  avatar_url,
+  created_at,
+  updated_at
+) VALUES (
+  'ID_DO_USUARIO', -- Copie o ID do usuário criado no Auth
+  '${userData.email}',
+  '${userData.nome}',
+  '${userData.tipo}',
+  ${userData.is_admin ?? false},
+  false,
+  ${userData.ativo ?? true},
+  ${userData.instituicao ? `'${userData.instituicao}'` : 'NULL'},
+  ${userData.telefone ? `'${userData.telefone}'` : 'NULL'},
+  ${userData.bio ? `'${userData.bio}'` : 'NULL'},
+  ${userData.avatar_url ? `'${userData.avatar_url}'` : 'NULL'},
+  NOW(),
+  NOW()
+);
+`;
 
-    const { data, error } = await supabase
-      .from('usuarios')
-      .insert([userRecord])
-      .select()
-      .single();
+  // Lançar erro com instruções
+  const errorMessage = `
+Para criar o usuário, siga estes passos:
 
-    if (error) {
-      console.error('❌ Erro ao criar usuário na tabela:', error);
-      // Tentar deletar usuário do Auth se falhou na tabela
-      try {
-        await supabase.auth.admin.deleteUser(authData.user.id);
-      } catch (cleanupError) {
-        console.error('❌ Erro ao limpar usuário do Auth:', cleanupError);
-      }
-      throw error;
-    }
+1. Acesse o Supabase Dashboard
+2. Vá em Authentication > Users
+3. Clique em "Create User"
+4. Use estes dados:
+   • Email: ${userData.email}
+   • Senha: ${password}
 
-    console.log('✅ createUserWithPassword: Usuário criado com sucesso');
-    if (isDefaultPassword) {
-      console.log('ℹ️  Senha padrão: 12345678 (usuário deve alterar no primeiro acesso)');
-    }
-    
-    return {
-      ...data,
-      data_criacao: data.created_at
-    };
+5. Copie o ID do usuário criado
+6. Execute o SQL no Supabase SQL Editor
 
-  } catch (error: any) {
-    console.error('💥 createUserWithPassword: Erro geral:', error);
-    throw error;
-  }
+As instruções SQL foram copiadas para o console.`;
+
+  console.log('📋 SQL para criar usuário:', sqlInstructions);
+  
+  throw new Error(errorMessage);
 };
 
 // Manter função antiga para compatibilidade
@@ -489,42 +489,41 @@ export const createUserWithDefaultPassword = async (userData: {
   });
 };
 
-// Nova função para resetar senha para padrão
-export const resetUserPassword = async (userId: string): Promise<void> => {
+// Função para enviar email de reset de senha
+export const resetUserPassword = async (userId: string, email: string): Promise<void> => {
   if (isDemoMode()) {
     return; // Em modo demo, apenas simular sucesso
   }
 
-  const defaultPassword = '12345678';
-  console.log('🔄 resetUserPassword: Resetando senha para padrão:', userId);
+  console.log('🔄 resetUserPassword: Enviando email de reset para:', email);
   
   try {
-    // 1. Resetar senha no Supabase Auth
-    const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
-      password: defaultPassword
+    // 1. Enviar email de reset de senha
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     });
 
-    if (authError) {
-      console.error('❌ Erro ao resetar senha no Auth:', authError);
-      throw authError;
+    if (resetError) {
+      console.error('❌ Erro ao enviar email de reset:', resetError);
+      throw resetError;
     }
 
-    // 2. Marcar que usuário deve alterar senha
+    // 2. Marcar no banco que o usuário deve trocar senha (opcional)
+    // Nota: Como o usuário vai definir uma nova senha, não precisamos forçar troca
     const { error: dbError } = await supabase
       .from('usuarios')
       .update({ 
-        must_change_password: true,
         updated_at: new Date().toISOString() 
       })
       .eq('id', userId);
 
     if (dbError) {
-      console.error('❌ Erro ao atualizar flag no banco:', dbError);
-      throw dbError;
+      console.error('⚠️ Aviso: Erro ao atualizar timestamp:', dbError);
+      // Não lançar erro aqui, pois o email já foi enviado
     }
 
-    console.log('✅ resetUserPassword: Senha resetada com sucesso');
-    console.log('ℹ️  Nova senha padrão:', defaultPassword, '(usuário deve alterar no próximo acesso)');
+    console.log('✅ resetUserPassword: Email de reset enviado com sucesso');
+    console.log('📧 O usuário receberá um email para redefinir a senha');
 
   } catch (error: any) {
     console.error('💥 resetUserPassword: Erro geral:', error);

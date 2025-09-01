@@ -1,65 +1,61 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Livro aberto -->
+  <!-- Favicon com design isométrico baseado na nova identidade visual -->
   <g>
-    <!-- Página esquerda (laranja) -->
+    <!-- Face esquerda - Navy/Azul escuro -->
     <path
-      d="M15 25 C15 20, 20 15, 25 15 L45 15 C47 15, 50 18, 50 20 L50 75 C50 77, 47 80, 45 80 L25 80 C20 80, 15 75, 15 70 Z"
-      fill="#E95420"
-      stroke="#C2471A"
-      stroke-width="1"
+      d="M10 25 L10 75 L35 85 L35 35 Z"
+      fill="#1B5E6B"
+      stroke="#164A54"
+      stroke-width="0.5"
     />
     
-    <!-- Página direita (verde) -->
+    <!-- Face superior esquerda - Verde claro -->
     <path
-      d="M50 20 C50 18, 53 15, 55 15 L75 15 C80 15, 85 20, 85 25 L85 70 C85 75, 80 80, 75 80 L55 80 C53 80, 50 77, 50 75 Z"
+      d="M10 25 L35 15 L60 25 L35 35 Z"
+      fill="#5CB85C"
+      stroke="#4CAF50"
+      stroke-width="0.5"
+    />
+    
+    <!-- Face direita superior - Verde médio -->
+    <path
+      d="M35 15 L60 25 L60 50 L35 40 Z"
       fill="#4CAF50"
       stroke="#388E3C"
-      stroke-width="1"
+      stroke-width="0.5"
     />
     
-    <!-- Lombada central -->
-    <line
-      x1="50"
-      y1="15"
-      x2="50"
-      y2="80"
-      stroke="#003F5C"
-      stroke-width="2"
-    />
-    
-    <!-- Linhas de texto na página esquerda -->
-    <line x1="20" y1="30" x2="40" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.8"/>
-    <line x1="20" y1="35" x2="42" y2="35" stroke="#FFFFFF" stroke-width="1" opacity="0.6"/>
-    <line x1="20" y1="40" x2="38" y2="40" stroke="#FFFFFF" stroke-width="1" opacity="0.6"/>
-    
-    <!-- Linhas de texto na página direita -->
-    <line x1="60" y1="30" x2="80" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.8"/>
-    <line x1="58" y1="35" x2="80" y2="35" stroke="#FFFFFF" stroke-width="1" opacity="0.6"/>
-    <line x1="62" y1="40" x2="80" y2="40" stroke="#FFFFFF" stroke-width="1" opacity="0.6"/>
-  </g>
-  
-  <!-- Seta de crescimento/progresso no canto superior direito -->
-  <g transform="translate(70, 10)">
-    <!-- Quadrado de fundo -->
-    <rect
-      x="0"
-      y="0"
-      width="25"
-      height="25"
-      rx="3"
-      fill="#4CAF50"
-      stroke="#388E3C"
-      stroke-width="1"
-    />
-    
-    <!-- Seta para cima e direita -->
+    <!-- Face direita meio - Coral -->
     <path
-      d="M8 17 L17 8 M17 8 L17 15 M17 8 L10 8"
-      stroke="#FFFFFF"
-      stroke-width="2.5"
-      fill="none"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      d="M60 25 L85 15 L85 40 L60 50 Z"
+      fill="#FF6B6B"
+      stroke="#E55555"
+      stroke-width="0.5"
+    />
+    
+    <!-- Face direita inferior - Vermelho -->
+    <path
+      d="M60 50 L85 40 L85 70 L60 80 Z"
+      fill="#E74C3C"
+      stroke="#C0392B"
+      stroke-width="0.5"
+    />
+    
+    <!-- Face inferior - conectando elementos -->
+    <path
+      d="M35 35 L60 25 L60 80 L35 85 Z"
+      fill="#2E7D8A"
+      stroke="#1B5E6B"
+      stroke-width="0.5"
+    />
+    
+    <!-- Elementos de conexão e profundidade -->
+    <path
+      d="M35 40 L60 50 L60 80 L35 85 Z"
+      fill="#358A3A"
+      stroke="#2E7D32"
+      stroke-width="0.3"
+      opacity="0.8"
     />
   </g>
 </svg>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Logo } from '../components/common/Logo';
 import { ROUTES } from '../utils/constants';
@@ -71,15 +71,12 @@ export const Login = () => {
         <div className="text-center">
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center">
-              <Logo size="md" showText={false} />
+              <Logo size="lg" showText={false} />
             </div>
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Área do Extensionista
+            Login
           </h2>
-          <p className="mt-2 text-gray-600">
-            Faça login para gerenciar casos de inovação social
-          </p>
         </div>
       </div>
 
@@ -159,42 +156,6 @@ export const Login = () => {
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  Precisa de acesso?
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600 mb-4">
-                Entre em contato com o administrador para criar sua conta de extensionista.
-              </p>
-              <div className="space-y-2">
-                <Link 
-                  to={`${ROUTES.CONTATO}?tipo=acesso`}
-                  className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline"
-                >
-                  📝 Solicitar acesso como extensionista
-                </Link>
-                
-                <div className="text-sm text-gray-500">
-                  <span>Admin com problemas de acesso? </span>
-                  <Link 
-                    to="/emergency-setup"
-                    className="text-red-600 hover:text-red-700 hover:underline font-medium"
-                  >
-                    🚨 Setup de Emergência
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

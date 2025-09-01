@@ -8,40 +8,64 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#fef7f2',
-          100: '#fdeee5',
-          200: '#fbdccb',
-          300: '#f8c1a1',
-          400: '#f4a377',
-          500: '#f0854d',
-          600: '#E95420', // Laranja principal
-          700: '#c2471a',
-          800: '#9b3914',
-          900: '#7a2d10',
+          50: '#fff5f5',
+          100: '#ffe5e5',
+          200: '#ffcccc',
+          300: '#ffb3b3',
+          400: '#ff9999',
+          500: '#ff8080',
+          600: '#FF6B6B', // Coral/Laranja da identidade visual como cor principal dos botões
+          700: '#e55555',
+          800: '#cc4040',
+          900: '#b32a2a',
         },
         secondary: {
           50: '#f0f9f0',
-          100: '#d9f2d9',
+          100: '#d9f2d9', 
           200: '#b3e6b3',
           300: '#8dd98d',
           400: '#67cc67',
-          500: '#4CAF50', // Verde principal
-          600: '#43a047',
+          500: '#4CAF50', // Verde médio
+          600: '#5CB85C', // Verde claro da identidade
           700: '#388e3c',
           800: '#2e7d2e',
           900: '#256b25',
         },
+        navy: {
+          50: '#f0f8f9',
+          100: '#d9eef2',
+          200: '#b3dce5',
+          300: '#8cc9d7',
+          400: '#66b7ca',
+          500: '#40a4bd',
+          600: '#1B5E6B', // Navy/Azul escuro da identidade
+          700: '#164a54',
+          800: '#11363d',
+          900: '#0c2226',
+        },
         accent: {
-          50: '#f0f4f8',
-          100: '#d6e3ef',
-          200: '#adc7df',
-          300: '#84abcf',
-          400: '#5b8fbf',
-          500: '#326faf',
-          600: '#003F5C', // Azul marinho principal
-          700: '#003651',
-          800: '#002d46',
-          900: '#00243b',
+          50: '#fff5f5',
+          100: '#ffe5e5',
+          200: '#ffcccc',
+          300: '#ffb3b3',
+          400: '#ff9999',
+          500: '#ff8080',
+          600: '#FF6B6B', // Coral da identidade
+          700: '#e55555',
+          800: '#cc4040',
+          900: '#b32a2a',
+        },
+        danger: {
+          50: '#fdf2f2',
+          100: '#fce4e4',
+          200: '#f9c9c9',
+          300: '#f5a9a9',
+          400: '#f28989',
+          500: '#ef6969',
+          600: '#E74C3C', // Vermelho da identidade
+          700: '#c0392b',
+          800: '#992d22',
+          900: '#72211a',
         },
         neutral: {
           50: '#fafafa',
