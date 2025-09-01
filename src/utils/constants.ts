@@ -29,6 +29,7 @@ export const USER_TYPES = {
   EXTENSIONISTA: 'extensionista',
   PESQUISADOR: 'pesquisador',
   COORDENADOR: 'coordenador',
+  DEMO: 'demo',
 } as const;
 
 export const CONTACT_TYPES = {

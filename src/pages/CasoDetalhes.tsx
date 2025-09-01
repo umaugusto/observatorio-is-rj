@@ -56,7 +56,7 @@ export const CasoDetalhes = () => {
 
   const canEdit = () => {
     if (!user || !caso) return false;
-    return user.tipo === 'admin' || user.id === caso.extensionista_id;
+    return user.tipo === 'admin' || user.tipo === 'demo' || user.id === caso.extensionista_id;
   };
 
   const handleEdit = () => {

@@ -158,6 +158,8 @@ export const UserManagement = () => {
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         user.tipo === 'admin' 
                           ? 'bg-purple-100 text-purple-800' 
+                          : user.tipo === 'demo'
+                          ? 'bg-orange-100 text-orange-800'
                           : user.tipo === 'coordenador'
                           ? 'bg-indigo-100 text-indigo-800'
                           : user.tipo === 'pesquisador'
@@ -165,6 +167,7 @@ export const UserManagement = () => {
                           : 'bg-blue-100 text-blue-800'
                       }`}>
                         {user.tipo === 'admin' ? 'Admin' : 
+                         user.tipo === 'demo' ? 'Demo' :
                          user.tipo === 'coordenador' ? 'Coordenador' :
                          user.tipo === 'pesquisador' ? 'Pesquisador' :
                          'Extensionista'}

@@ -25,8 +25,8 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
-  // Verificar se é admin quando adminOnly=true
-  if (adminOnly && user.tipo !== 'admin') {
+  // Verificar se é admin quando adminOnly=true (ou demo para testar funcionalidades)
+  if (adminOnly && user.tipo !== 'admin' && user.tipo !== 'demo') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

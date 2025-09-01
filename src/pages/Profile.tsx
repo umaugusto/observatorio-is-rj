@@ -156,6 +156,8 @@ export const Profile = () => {
               <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
                 user.tipo === 'admin' 
                   ? 'bg-purple-100 text-purple-800' 
+                  : user.tipo === 'demo'
+                  ? 'bg-orange-100 text-orange-800'
                   : user.tipo === 'coordenador'
                   ? 'bg-indigo-100 text-indigo-800'
                   : user.tipo === 'pesquisador'
@@ -163,6 +165,7 @@ export const Profile = () => {
                   : 'bg-blue-100 text-blue-800'
               }`}>
                 {user.tipo === 'admin' ? 'Administrador' : 
+                 user.tipo === 'demo' ? 'Demonstração' :
                  user.tipo === 'coordenador' ? 'Coordenador' :
                  user.tipo === 'pesquisador' ? 'Pesquisador' :
                  'Extensionista'}
