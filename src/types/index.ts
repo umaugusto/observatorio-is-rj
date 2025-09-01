@@ -2,7 +2,9 @@ export interface User {
   id: string;
   email: string;
   nome: string;
-  tipo: 'admin' | 'extensionista' | 'pesquisador' | 'coordenador' | 'demo';
+  tipo: 'extensionista' | 'pesquisador' | 'coordenador' | 'demo';
+  is_admin?: boolean; // Flag para identificar se o usuário tem permissões administrativas
+  is_root?: boolean; // Flag para identificar o usuário root do sistema
   instituicao?: string;
   telefone?: string;
   bio?: string;

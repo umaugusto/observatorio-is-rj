@@ -133,7 +133,7 @@ export const Header = () => {
                       <span>Meu Perfil</span>
                     </button>
 
-                    {(user.tipo === 'admin' || user.tipo === 'demo') && (
+                    {(user.is_admin || user.tipo === 'demo') && (
                       <>
                         <button
                           onClick={handleUserManagement}

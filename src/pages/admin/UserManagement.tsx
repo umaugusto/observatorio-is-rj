@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAllUsers, updateUser, deleteUser, toggleUserStatus, uploadAvatarOnly, createUserWithDefaultPassword, resetUserPassword as resetToDefaultPassword } from '../../services/supabase';
+import { getAllUsers, updateUser, deleteUser, toggleUserStatus, uploadAvatarOnly, createUserWithPassword, resetUserPassword as resetToDefaultPassword } from '../../services/supabase';
 import { Avatar } from '../../components/common/Avatar';
 import type { User } from '../../types';
 
@@ -123,7 +123,7 @@ export const UserManagement = () => {
                     Usuário
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo
+                    Tipo / Permissões
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Instituição
@@ -156,23 +156,32 @@ export const UserManagement = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.tipo === 'admin' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : user.tipo === 'demo'
+                      <div className="flex flex-col space-y-1">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          user.tipo === 'demo'
                           ? 'bg-orange-100 text-orange-800'
                           : user.tipo === 'coordenador'
                           ? 'bg-indigo-100 text-indigo-800'
                           : user.tipo === 'pesquisador'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {user.tipo === 'admin' ? 'Admin' : 
-                         user.tipo === 'demo' ? 'Demo' :
-                         user.tipo === 'coordenador' ? 'Coordenador' :
-                         user.tipo === 'pesquisador' ? 'Pesquisador' :
-                         'Extensionista'}
-                      </span>
+                        }`}>
+                          {user.tipo === 'demo' ? 'Demo' :
+                           user.tipo === 'coordenador' ? 'Coordenador' :
+                           user.tipo === 'pesquisador' ? 'Pesquisador' :
+                           'Extensionista'}
+                        </span>
+                        {user.is_admin && (
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                            Admin
+                          </span>
+                        )}
+                        {user.is_root && (
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            Root
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.instituicao || '-'}
@@ -289,10 +298,16 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
   const [formData, setFormData] = useState({
     nome: user?.nome || '',
     email: user?.email || '',
-    tipo: user?.tipo || 'extensionista' as 'admin' | 'extensionista' | 'pesquisador' | 'coordenador',
+    tipo: user?.tipo || 'extensionista' as 'extensionista' | 'pesquisador' | 'coordenador',
+    is_admin: user?.is_admin ?? false,
     telefone: user?.telefone || '',
     bio: user?.bio || '',
     ativo: user?.ativo ?? true,
+    // Campos de senha para criação
+    password: '',
+    confirmPassword: '',
+    useDefaultPassword: true, // Por padrão, usar senha padrão
+    must_change_password: true, // Por padrão, forçar troca
   });
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -327,29 +342,56 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
       return;
     }
     
-    if (!formData.email.endsWith('@ufrj.br')) {
-      onError('Email deve ser da UFRJ (@ufrj.br)');
-      return;
+    // Se não estiver usando senha padrão, validar senha customizada
+    if (!user && !formData.useDefaultPassword) {
+      if (!formData.password) {
+        onError('Por favor, defina uma senha');
+        return;
+      }
+      if (formData.password.length < 8) {
+        onError('A senha deve ter pelo menos 8 caracteres');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        onError('As senhas não coincidem');
+        return;
+      }
+      if (formData.password === '12345678') {
+        onError('Por favor, escolha uma senha diferente da padrão');
+        return;
+      }
     }
 
     setSaving(true);
     try {
-      const userData = { 
-        ...formData, 
-        avatar_url: tempAvatarUrl,
-        instituicao: 'UFRJ' // Automaticamente definido para todos os usuários
-      };
-      
       if (user) {
         // Editar usuário existente
+        const userData = { 
+          nome: formData.nome,
+          email: formData.email,
+          tipo: formData.tipo,
+          is_admin: formData.is_admin,
+          telefone: formData.telefone,
+          bio: formData.bio,
+          ativo: formData.ativo,
+          avatar_url: tempAvatarUrl,
+          instituicao: 'UFRJ'
+        };
         await updateUser(user.id, userData);
       } else {
-        // Criar novo usuário com senha padrão
-        await createUserWithDefaultPassword({
+        // Criar novo usuário
+        await createUserWithPassword({
           email: formData.email,
           nome: formData.nome,
           tipo: formData.tipo,
-          ativo: formData.ativo
+          is_admin: formData.is_admin,
+          password: formData.useDefaultPassword ? undefined : formData.password,
+          must_change_password: formData.useDefaultPassword || formData.must_change_password,
+          telefone: formData.telefone,
+          bio: formData.bio,
+          ativo: formData.ativo,
+          avatar_url: tempAvatarUrl,
+          instituicao: 'UFRJ'
         });
       }
       
@@ -434,18 +476,6 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
                 Informações Básicas
               </h4>
               
-              {!user && (
-                <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-4 text-sm">
-                  <div className="flex items-center">
-                    <span className="text-lg mr-2">🔑</span>
-                    <div>
-                      <div className="font-semibold">Senha padrão automática</div>
-                      <div>O usuário receberá a senha padrão <code className="bg-blue-100 px-1 rounded">12345678</code> e será obrigado a alterá-la no primeiro acesso.</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -493,13 +523,12 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
                   </label>
                   <select
                     value={formData.tipo}
-                    onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'admin' | 'extensionista' | 'pesquisador' | 'coordenador' }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as 'extensionista' | 'pesquisador' | 'coordenador' }))}
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   >
                     <option value="extensionista">Extensionista</option>
                     <option value="pesquisador">Pesquisador</option>
                     <option value="coordenador">Coordenador</option>
-                    <option value="admin">Administrador</option>
                   </select>
                 </div>
 
@@ -543,7 +572,143 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
                   </div>
                 </div>
               </div>
+              
+              {/* Checkbox para permissões administrativas */}
+              <div className="mt-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_admin}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_admin: e.target.checked }))}
+                    className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Conceder permissões administrativas
+                  </span>
+                </label>
+                <p className="ml-7 text-xs text-gray-500 mt-1">
+                  Permite criar/editar/excluir usuários e gerenciar o sistema
+                </p>
+              </div>
             </div>
+
+            {/* Configuração de Senha (apenas para novos usuários) */}
+            {!user && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Configuração de Senha
+                </h4>
+                
+                {/* Opção de usar senha padrão ou customizada */}
+                <div className="space-y-4">
+                  <div className="flex space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ 
+                        ...prev, 
+                        useDefaultPassword: true,
+                        must_change_password: true,
+                        password: '',
+                        confirmPassword: ''
+                      }))}
+                      className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
+                        formData.useDefaultPassword
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-300 bg-white text-gray-500 hover:border-gray-400'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center">
+                        <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <span className="font-medium">Senha Padrão</span>
+                        <span className="text-xs mt-1">12345678</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ 
+                        ...prev, 
+                        useDefaultPassword: false,
+                        must_change_password: false
+                      }))}
+                      className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
+                        !formData.useDefaultPassword
+                          ? 'border-green-500 bg-green-50 text-green-700'
+                          : 'border-gray-300 bg-white text-gray-500 hover:border-gray-400'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center">
+                        <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        <span className="font-medium">Senha Personalizada</span>
+                        <span className="text-xs mt-1">Definir agora</span>
+                      </div>
+                    </button>
+                  </div>
+                  
+                  {/* Mostrar alerta baseado na escolha */}
+                  {formData.useDefaultPassword ? (
+                    <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg text-sm">
+                      <div className="flex items-center">
+                        <span className="text-lg mr-2">🔑</span>
+                        <div>
+                          <div className="font-semibold">Senha padrão será aplicada</div>
+                          <div>O usuário receberá a senha <code className="bg-blue-100 px-1 rounded">12345678</code> e será obrigado a alterá-la no primeiro acesso.</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Campos de senha personalizada */}
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Senha
+                          </label>
+                          <input
+                            type="password"
+                            value={formData.password}
+                            onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Mínimo 8 caracteres"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Confirmar Senha
+                          </label>
+                          <input
+                            type="password"
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Digite a senha novamente"
+                          />
+                        </div>
+                        
+                        {/* Checkbox para forçar troca mesmo com senha personalizada */}
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.must_change_password}
+                            onChange={(e) => setFormData(prev => ({ ...prev, must_change_password: e.target.checked }))}
+                            className="w-4 h-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            Exigir alteração de senha no primeiro login
+                          </span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Detalhes Adicionais */}
             <div className="bg-gray-50 rounded-lg p-4">

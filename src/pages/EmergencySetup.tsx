@@ -58,7 +58,9 @@ export const EmergencySetup = () => {
             id: newAuthUser.user.id,
             email: 'antonio.aas@ufrj.br',
             nome: 'Antonio Augusto Silva',
-            tipo: 'admin',
+            tipo: 'extensionista', // Tipo base de usuário
+            is_admin: true, // Permissões administrativas
+            is_root: true, // Marcar como root
             ativo: true,
             must_change_password: true, // Forçar troca da senha temporária
             created_at: new Date().toISOString(),
@@ -83,7 +85,9 @@ export const EmergencySetup = () => {
             id: authUser.id,
             email: 'antonio.aas@ufrj.br',
             nome: 'Antonio Augusto Silva',
-            tipo: 'admin',
+            tipo: 'extensionista', // Tipo base de usuário
+            is_admin: true, // Permissões administrativas
+            is_root: true, // Marcar como root
             ativo: true,
             must_change_password: false,
             created_at: new Date().toISOString(),
@@ -138,7 +142,7 @@ export const EmergencySetup = () => {
           <ul className="text-xs space-y-1">
             <li>• Verificar se usuário root existe</li>
             <li>• Criar no Supabase Auth se necessário</li>
-            <li>• Adicionar à tabela usuarios como admin</li>
+            <li>• Adicionar à tabela usuarios como admin/root</li>
             <li>• Permitir login normal</li>
           </ul>
         </div>

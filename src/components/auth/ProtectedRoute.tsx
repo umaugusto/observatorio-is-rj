@@ -26,7 +26,7 @@ export const ProtectedRoute = ({ children, adminOnly = false }: ProtectedRoutePr
   }
 
   // Verificar se é admin quando adminOnly=true (ou demo para testar funcionalidades)
-  if (adminOnly && user.tipo !== 'admin' && user.tipo !== 'demo') {
+  if (adminOnly && !user.is_admin && user.tipo !== 'demo') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

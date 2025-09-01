@@ -153,23 +153,32 @@ export const Profile = () => {
             <p className="text-gray-600">{user.email}</p>
             
             <div className="mt-4">
-              <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                user.tipo === 'admin' 
-                  ? 'bg-purple-100 text-purple-800' 
-                  : user.tipo === 'demo'
+              <div className="flex flex-wrap gap-2">
+                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                  user.tipo === 'demo'
                   ? 'bg-orange-100 text-orange-800'
                   : user.tipo === 'coordenador'
                   ? 'bg-indigo-100 text-indigo-800'
                   : user.tipo === 'pesquisador'
                   ? 'bg-green-100 text-green-800'
                   : 'bg-blue-100 text-blue-800'
-              }`}>
-                {user.tipo === 'admin' ? 'Administrador' : 
-                 user.tipo === 'demo' ? 'Demonstração' :
-                 user.tipo === 'coordenador' ? 'Coordenador' :
-                 user.tipo === 'pesquisador' ? 'Pesquisador' :
-                 'Extensionista'}
-              </span>
+                }`}>
+                  {user.tipo === 'demo' ? 'Demonstração' :
+                   user.tipo === 'coordenador' ? 'Coordenador' :
+                   user.tipo === 'pesquisador' ? 'Pesquisador' :
+                   'Extensionista'}
+                </span>
+                {user.is_admin && (
+                  <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 text-purple-800">
+                    Administrador
+                  </span>
+                )}
+                {user.is_root && (
+                  <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
+                    Root
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

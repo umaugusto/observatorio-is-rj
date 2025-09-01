@@ -380,25 +380,39 @@ export const createNewUser = async (userData: Omit<User, 'id' | 'created_at' | '
   };
 };
 
-// Nova função para criar usuário com senha padrão
-export const createUserWithDefaultPassword = async (userData: {
+// Nova função para criar usuário com senha (customizada ou padrão)
+export const createUserWithPassword = async (userData: {
   email: string;
   nome: string;
   tipo: User['tipo'];
+  is_admin?: boolean;
+  password?: string; // Senha customizada opcional
+  must_change_password?: boolean; // Flag para forçar troca
   ativo?: boolean;
+  instituicao?: string;
+  telefone?: string;
+  bio?: string;
+  avatar_url?: string | null;
 }): Promise<User> => {
   if (isDemoMode()) {
-    return DemoInterceptor.createNewUser({ ...userData, must_change_password: true });
+    return DemoInterceptor.createNewUser({ 
+      ...userData, 
+      must_change_password: userData.must_change_password ?? !userData.password 
+    });
   }
 
-  const defaultPassword = '12345678';
-  console.log('🔑 createUserWithDefaultPassword: Criando usuário com senha padrão:', userData.email);
+  // Usar senha fornecida ou padrão
+  const password = userData.password || '12345678';
+  const isDefaultPassword = !userData.password;
+  
+  console.log('🔑 createUserWithPassword: Criando usuário:', userData.email);
+  console.log('🔐 Usando senha:', isDefaultPassword ? 'padrão (12345678)' : 'personalizada');
   
   try {
     // 1. Criar usuário no Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: userData.email,
-      password: defaultPassword,
+      password: password,
       email_confirm: true // Auto-confirma o email
     });
 
@@ -411,14 +425,21 @@ export const createUserWithDefaultPassword = async (userData: {
       throw new Error('Usuário criado no Auth mas dados não retornados');
     }
 
-    // 2. Criar usuário na tabela usuarios com flag de mudança de senha
+    // 2. Criar usuário na tabela usuarios
     const userRecord = {
       id: authData.user.id,
       email: userData.email,
       nome: userData.nome,
       tipo: userData.tipo,
+      is_admin: userData.is_admin ?? false,
+      is_root: false, // Nunca criar root por esta função
       ativo: userData.ativo ?? true,
-      must_change_password: true
+      // Se não forneceu senha ou explicitamente pediu, forçar troca
+      must_change_password: userData.must_change_password ?? isDefaultPassword,
+      instituicao: userData.instituicao,
+      telefone: userData.telefone,
+      bio: userData.bio,
+      avatar_url: userData.avatar_url
     };
 
     const { data, error } = await supabase
@@ -438,8 +459,10 @@ export const createUserWithDefaultPassword = async (userData: {
       throw error;
     }
 
-    console.log('✅ createUserWithDefaultPassword: Usuário criado com sucesso');
-    console.log('ℹ️  Senha padrão:', defaultPassword, '(usuário deve alterar no primeiro acesso)');
+    console.log('✅ createUserWithPassword: Usuário criado com sucesso');
+    if (isDefaultPassword) {
+      console.log('ℹ️  Senha padrão: 12345678 (usuário deve alterar no primeiro acesso)');
+    }
     
     return {
       ...data,
@@ -447,9 +470,23 @@ export const createUserWithDefaultPassword = async (userData: {
     };
 
   } catch (error: any) {
-    console.error('💥 createUserWithDefaultPassword: Erro geral:', error);
+    console.error('💥 createUserWithPassword: Erro geral:', error);
     throw error;
   }
+};
+
+// Manter função antiga para compatibilidade
+export const createUserWithDefaultPassword = async (userData: {
+  email: string;
+  nome: string;
+  tipo: User['tipo'];
+  ativo?: boolean;
+}): Promise<User> => {
+  return createUserWithPassword({
+    ...userData,
+    password: undefined, // Força uso da senha padrão
+    must_change_password: true // Força troca no primeiro login
+  });
 };
 
 // Nova função para resetar senha para padrão

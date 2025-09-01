@@ -29,16 +29,20 @@ npm run preview            # Preview production build
 
 ### User Management System
 - Complete admin interface at `/admin/usuarios` for user CRUD operations
+- **Default Password System**: Admins can create users with default password `12345678`
+- **Forced Password Change**: Users with `must_change_password = true` are redirected to `/change-password`
+- **Password Reset**: Reset user passwords to default and force change on next login
 - Profile management system with avatar upload functionality
 - Protected routes using `ProtectedRoute` component with role-based access
-- Four user types with different permissions and UI styling
+- Five user types including `demo` for demonstration mode
 
 ### Core Data Models
 ```typescript
 // src/types/index.ts
 User: { 
-  id, email, nome, tipo: 'admin' | 'extensionista' | 'pesquisador' | 'coordenador',
-  instituicao?, telefone?, bio?, avatar_url?: string | null, ativo, created_at, updated_at
+  id, email, nome, tipo: 'admin' | 'extensionista' | 'pesquisador' | 'coordenador' | 'demo',
+  instituicao?, telefone?, bio?, avatar_url?: string | null, ativo, must_change_password?, 
+  isDemo?, created_at, updated_at
 }
 CasoInovacao: { 
   id, titulo, descricao, resumo?, localizacao, categoria, subcategoria?,
@@ -50,13 +54,15 @@ CasoInovacao: {
 ```typescript
 // src/services/supabase.ts
 // User Management
-getAllUsers()                 // Get all users (admin only)
-getUser(userId)              // User profile (with 5s timeout)
-getOrCreateUser(authUser)    // Auto-create user if missing
-updateUser(userId, updates)  // Update user profile
-createNewUser(userData)      // Create new user (admin)
-toggleUserStatus()           // Activate/deactivate user
-deleteUser()                 // Remove user
+getAllUsers()                           // Get all users (admin only)
+getUser(userId)                        // User profile (with 5s timeout)
+getOrCreateUser(authUser)              // SECURITY: Only returns existing users, no auto-creation
+updateUser(userId, updates)            // Update user profile
+createNewUser(userData)                // Create new user (admin) - legacy
+createUserWithDefaultPassword(data)   // Create user with password "12345678" + must_change_password=true
+resetUserPassword(userId)              // Reset password to "12345678" + force change
+toggleUserStatus()                     // Activate/deactivate user
+deleteUser()                           // Remove user
 
 // Avatar Management
 uploadAvatar(userId, file)   // Upload and update user avatar
@@ -74,15 +80,19 @@ getCasosByCategory(categoria) // Filtered by category
 src/
 ├── components/
 │   ├── auth/
-│   │   └── ProtectedRoute.tsx     # Role-based route protection
+│   │   ├── ProtectedRoute.tsx        # Role-based route protection
+│   │   └── PasswordChangeGuard.tsx   # Forces password change when must_change_password=true
 │   ├── common/
-│   │   ├── Avatar.tsx             # Avatar component with initials fallback
-│   │   └── Header.tsx             # Navigation with user menu
-│   └── setup/DatabaseSetup.tsx    # First-time database setup UI
+│   │   ├── Avatar.tsx                # Avatar component with initials fallback
+│   │   ├── Header.tsx                # Navigation with user menu
+│   │   └── DemoBanner.tsx            # Demo mode indicator banner
+│   └── setup/DatabaseSetup.tsx       # First-time database setup UI
 ├── pages/
 │   ├── Profile.tsx                # User profile with avatar upload
+│   ├── ChangePassword.tsx         # Forced password change page
+│   ├── EmergencySetup.tsx         # Emergency root user creation (admin recovery)
 │   └── admin/
-│       └── UserManagement.tsx     # Complete admin user management
+│       └── UserManagement.tsx     # Complete admin user management with default passwords
 ├── hooks/useAuth.tsx              # Authentication context & state
 ├── services/supabase.ts           # Database operations & avatar storage
 ├── types/index.ts                 # TypeScript interfaces
@@ -98,10 +108,13 @@ src/
 - Extensive console logging with emoji prefixes (🔍, ✅, ❌)
 
 ### Authentication & Session Management
+- **Security Model**: Only pre-registered users can access (no auto-registration)
+- `getOrCreateUser()` rejects login if user not in `usuarios` table
 - Supabase client configured with explicit session persistence options
-- Debug logging includes localStorage token verification
-- Fallback user creation if profile fetch fails but auth session exists
-- Session state debugging with timestamp and expiry logging
+- **Password Management**: Default password system with forced change on first login
+- **PasswordChangeGuard** component intercepts users needing password changes
+- Debug logging includes localStorage token verification and session state
+- **Emergency Setup**: `/emergency-setup` route for admin account recovery
 
 ### State Management
 - Authentication state via React Context (`useAuth`)
@@ -197,3 +210,81 @@ src/
 - **Logo** (`src/components/common/Logo.tsx`): SVG logo with open book + growth arrow
 - **Header** (`src/components/common/Header.tsx`): Navigation with Designário branding
 - **CaseMap** (`src/components/common/CaseMap.tsx`): Interactive neighborhood boundary maps
+
+## Password Management System
+
+### Default Password Flow
+1. **Admin creates user** via `/admin/usuarios` → auto-assigns password `12345678`
+2. **User first login** → `PasswordChangeGuard` detects `must_change_password = true`
+3. **Automatic redirect** to `/change-password` → user cannot access app until password changed
+4. **Password validation**: Cannot use default password `12345678`, minimum 8 characters
+5. **After successful change** → `must_change_password = false` → normal access granted
+
+### Password Reset Flow
+1. **Admin clicks reset button** for user → confirms with warning dialog
+2. **System resets password** to `12345678` + sets `must_change_password = true`
+3. **User notified** to change password on next login
+4. **Emergency Setup**: `/emergency-setup` creates root admin if access issues occur
+
+### Key Components
+- **PasswordChangeGuard**: Wraps entire app, intercepts users needing password change
+- **ChangePassword page**: Secure password change with validation and UI feedback
+- **UserManagement**: Admin interface with create/reset password functionality
+- **EmergencySetup**: Recovery tool for creating root admin account
+
+## Demo Mode System
+
+### Demo Features
+- **Demo banner** appears when `isDemoMode()` returns true
+- **DemoInterceptor** class intercepts all database operations
+- **Mock data** returned for users, cases, and messages without persistence
+- **Demo user authentication** via `signInDemo()` function
+- **Visual indicators** throughout UI to show demo status
+
+### Demo Data Sources
+- `src/services/demoData.ts` contains mock users, cases, and messages
+- Demo user has `isDemo: true` flag for identification
+- All CRUD operations simulated with realistic delays
+- No actual database modifications in demo mode
+
+## Security Features
+
+### Access Control
+- **Whitelist-only access**: Only users in `usuarios` table can login
+- **Role-based permissions**: Different UI/features per user type
+- **Protected routes**: `ProtectedRoute` component with `adminOnly` flag
+- **Session management**: Persistent authentication with auto-refresh
+
+### Database Security
+- **Row Level Security (RLS)** policies required on all tables
+- **User-scoped access**: Users can only modify their own data
+- **Admin permissions**: Special access for user management operations
+- **API key security**: Never expose service role keys in client code
+
+## Development Guidelines
+
+### Code Style & Architecture
+- **TypeScript strict mode**: All new code must be properly typed
+- **Component patterns**: Use functional components with hooks
+- **Error handling**: Always wrap Supabase calls in try/catch with user-friendly messages
+- **Console logging**: Use emoji prefixes for debugging (🔍, ✅, ❌, 🔑, 🚨)
+- **Responsive design**: Mobile-first approach with Tailwind classes
+
+### Database Operations
+- **Timeout handling**: Use 5-second timeouts for queries that may hang
+- **RLS compliance**: All queries must respect Row Level Security policies
+- **User security**: Never auto-create users - only return existing registered users
+- **Avatar management**: Clean up old files when updating user avatars
+
+### Password Security
+- **Default password**: Always `12345678` for admin-created accounts
+- **Force change**: Set `must_change_password = true` for new/reset accounts
+- **Validation**: Prevent reuse of default password, enforce minimum 8 characters
+- **Emergency access**: Use `/emergency-setup` for admin account recovery
+
+### Important Files & Scripts
+- **GUIA-CADASTRO-USUARIOS.md**: Step-by-step user registration guide
+- **create-admin-users.sql**: SQL script for bulk admin user creation
+- **EmergencySetup.tsx**: Admin account recovery interface
+- **PasswordChangeGuard.tsx**: Password change enforcement component
+- o dominio é https://observatorio-is-rj.netlify.app/login

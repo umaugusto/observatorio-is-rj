@@ -18,19 +18,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }, 2000);
     
-    // Debug: verificar localStorage
-    const supabaseAuth = localStorage.getItem('sb-vpdtoxesovtplyowquyh-auth-token');
-    console.log('🔍 useAuth: LocalStorage auth token exists:', !!supabaseAuth);
-    if (supabaseAuth) {
-      try {
-        const parsed = JSON.parse(supabaseAuth);
-        console.log('🔍 useAuth: Token expires at:', new Date(parsed.expires_at * 1000));
-        console.log('🔍 useAuth: Current time:', new Date());
-      } catch (e) {
-        console.log('🔍 useAuth: Erro ao parsear token do localStorage');
-      }
-    }
-    
     // Verificar sessão existente
     const getInitialSession = async () => {
       try {
@@ -55,16 +42,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(userData);
           } catch (userError) {
             console.error('❌ useAuth: Erro ao buscar dados do usuário:', userError);
-            // Manter usuário logado mesmo se houver erro ao buscar dados
-            setUser({
-              id: session.user.id,
-              email: session.user.email!,
-              nome: session.user.email!.split('@')[0],
-              tipo: 'extensionista',
-              ativo: true,
-              created_at: session.user.created_at,
-              updated_at: session.user.updated_at || session.user.created_at
-            } as any);
+            // Se houver erro, apenas deslogar
+            console.log('⚠️ useAuth: Erro ao buscar dados do usuário, usuário não está cadastrado');
+            await supabase.auth.signOut();
+            setUser(null);
           }
         } else {
           console.log('ℹ️ useAuth: Nenhuma sessão ativa encontrada');
