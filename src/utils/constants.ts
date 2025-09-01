@@ -1,0 +1,28 @@
+export const ROUTES = {
+  HOME: '/',
+  CASOS: '/casos',
+  CATEGORIAS: '/categorias',
+  MAPA: '/mapa',
+  SOBRE: '/sobre',
+  CONTATO: '/contato',
+  LOGIN: '/login',
+} as const;
+
+export const CATEGORIES = [
+  'Educação',
+  'Saúde',
+  'Meio Ambiente',
+  'Geração de Renda',
+  'Cultura',
+  'Tecnologia Social',
+  'Direitos Humanos',
+  'Habitação',
+] as const;
+
+export const USER_TYPES = {
+  ADMIN: 'admin',
+  EXTENSIONISTA: 'extensionista',
+} as const;
+
+export const APP_NAME = 'Observatório de Inovação Social - RJ';
+export const APP_DESCRIPTION = 'Plataforma digital para catalogar, visualizar e promover casos de inovação social no Rio de Janeiro';
