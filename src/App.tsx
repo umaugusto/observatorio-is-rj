@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
-import { Loading } from './components/common/Loading';
 import { Home } from './pages/Home';
 import { Casos } from './pages/Casos';
 import { Login } from './pages/Login';
