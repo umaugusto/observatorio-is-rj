@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { CasoInovacao } from '../../types';
 
 interface CaseCardProps {
@@ -6,10 +7,20 @@ interface CaseCardProps {
 }
 
 export const CaseCard = ({ caso, onClick }: CaseCardProps) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      navigate(`/caso/${caso.id}`);
+    }
+  };
+
   return (
     <div 
       className="card cursor-pointer transform hover:scale-105 transition-transform duration-200"
-      onClick={onClick}
+      onClick={handleClick}
     >
       {caso.imagem_url ? (
         <img
@@ -47,7 +58,18 @@ export const CaseCard = ({ caso, onClick }: CaseCardProps) => {
         
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span className="flex items-center">
-            📍 {caso.localizacao}
+            📍 {(() => {
+              // Priorizar novos campos de localização
+              if (caso.cidade) {
+                const parts = [];
+                if (caso.bairro) parts.push(caso.bairro);
+                parts.push(caso.cidade);
+                if (caso.estado) parts.push(caso.estado);
+                return parts.join(', ');
+              }
+              // Fallback para campo antigo
+              return caso.localizacao || 'Localização não informada';
+            })()}
           </span>
           {caso.extensionista && (
             <span>

@@ -1,11 +1,183 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getCasos } from '../services/supabase';
 import { checkDatabaseSetup } from '../services/database-setup';
-import { CaseCard } from '../components/casos/CaseCard';
 import { DatabaseSetup } from '../components/setup/DatabaseSetup';
 import { ROUTES, APP_NAME } from '../utils/constants';
 import type { CasoInovacao } from '../types';
+
+// Componentes especializados para o bento box
+const CaseCardLarge = ({ caso }: { caso: CasoInovacao }) => {
+  const navigate = useNavigate();
+  
+  const getLocationString = () => {
+    if (caso.cidade) {
+      const parts = [];
+      if (caso.bairro) parts.push(caso.bairro);
+      parts.push(caso.cidade);
+      if (caso.estado) parts.push(caso.estado);
+      return parts.join(', ');
+    }
+    return caso.localizacao || 'Localização não informada';
+  };
+
+  return (
+    <div 
+      className="relative h-96 rounded-2xl overflow-hidden cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300"
+      onClick={() => navigate(`/caso/${caso.id}`)}
+    >
+      {caso.imagem_url ? (
+        <img
+          src={caso.imagem_url}
+          alt={caso.titulo}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+          <span className="text-primary-600 font-semibold text-2xl">{caso.categoria}</span>
+        </div>
+      )}
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+      
+      <div className="absolute top-6 left-6">
+        <span className="inline-block bg-white/90 backdrop-blur-sm text-primary-800 text-sm px-3 py-1 rounded-full font-semibold">
+          {caso.categoria}
+        </span>
+      </div>
+      
+      <div className="absolute bottom-6 left-6 right-6">
+        <h3 className="text-3xl font-bold text-white mb-4 line-clamp-2 leading-tight">
+          {caso.titulo}
+        </h3>
+        <p className="text-white/90 text-base mb-6 line-clamp-3 leading-relaxed">
+          {caso.resumo || caso.descricao}
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-gray-800 text-sm bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full">
+            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+            </svg>
+            {getLocationString()}
+          </div>
+          {caso.extensionista && (
+            <div className="text-gray-800 text-sm font-medium bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full">
+              {caso.extensionista.nome.split(' ')[0]}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CaseCardMedium = ({ caso }: { caso: CasoInovacao }) => {
+  const navigate = useNavigate();
+  
+  const getLocationString = () => {
+    if (caso.cidade) {
+      const parts = [];
+      if (caso.bairro) parts.push(caso.bairro);
+      parts.push(caso.cidade);
+      return parts.join(', ');
+    }
+    return caso.localizacao || 'Local não informado';
+  };
+
+  return (
+    <div 
+      className="relative h-96 rounded-2xl overflow-hidden cursor-pointer group shadow-lg hover:shadow-xl transition-all duration-300"
+      onClick={() => navigate(`/caso/${caso.id}`)}
+    >
+      {caso.imagem_url ? (
+        <img
+          src={caso.imagem_url}
+          alt={caso.titulo}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-secondary-100 to-secondary-200 flex items-center justify-center">
+          <span className="text-secondary-600 font-semibold text-xl">{caso.categoria}</span>
+        </div>
+      )}
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+      
+      <div className="absolute top-4 left-4">
+        <span className="inline-block bg-white/90 backdrop-blur-sm text-primary-800 text-xs px-2 py-1 rounded-full font-medium">
+          {caso.categoria}
+        </span>
+      </div>
+      
+      <div className="absolute bottom-4 left-4 right-4">
+        <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight">
+          {caso.titulo}
+        </h3>
+        <p className="text-white/85 text-sm mb-4 line-clamp-2 leading-relaxed">
+          {caso.resumo || caso.descricao}
+        </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-gray-800 text-xs bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+            </svg>
+            {getLocationString()}
+          </div>
+          {caso.extensionista && (
+            <div className="text-gray-800 text-xs font-medium bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+              {caso.extensionista.nome.split(' ')[0]}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CaseCardSmall = ({ caso }: { caso: CasoInovacao }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div 
+      className="relative h-48 rounded-xl overflow-hidden cursor-pointer group shadow-md hover:shadow-lg transition-all duration-300"
+      onClick={() => navigate(`/caso/${caso.id}`)}
+    >
+      {caso.imagem_url ? (
+        <img
+          src={caso.imagem_url}
+          alt={caso.titulo}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+          <span className="text-gray-600 font-medium text-sm">{caso.categoria}</span>
+        </div>
+      )}
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+      
+      <div className="absolute top-3 left-3">
+        <span className="inline-block bg-white/90 backdrop-blur-sm text-primary-800 text-xs px-2 py-1 rounded-full font-medium">
+          {caso.categoria}
+        </span>
+      </div>
+      
+      <div className="absolute bottom-3 left-3 right-3">
+        <h3 className="text-base font-bold text-white mb-2 line-clamp-2 leading-tight">
+          {caso.titulo}
+        </h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-gray-800 text-xs bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+            </svg>
+            {caso.cidade || caso.localizacao || 'Local não informado'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const Home = () => {
   const [casos, setCasos] = useState<CasoInovacao[]>([]);
@@ -160,9 +332,24 @@ export const Home = () => {
               <p className="text-red-600">{error}</p>
             </div>
           ) : casos.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {casos.map((caso) => (
-                <CaseCard key={caso.id} caso={caso} />
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 mb-12 max-w-7xl mx-auto">
+              {/* Linha 1: Caso principal (2x2) + Caso destaque (1x2) */}
+              {casos[0] && (
+                <div className="lg:col-span-4 lg:row-span-2">
+                  <CaseCardLarge caso={casos[0]} />
+                </div>
+              )}
+              {casos[1] && (
+                <div className="lg:col-span-2 lg:row-span-2">
+                  <CaseCardMedium caso={casos[1]} />
+                </div>
+              )}
+              
+              {/* Linha 2: 3 casos quadrados */}
+              {casos.slice(2, 5).map((caso) => (
+                <div key={caso.id} className="lg:col-span-2">
+                  <CaseCardSmall caso={caso} />
+                </div>
               ))}
             </div>
           ) : (

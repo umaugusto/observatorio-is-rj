@@ -37,8 +37,12 @@ export interface DatabaseCasoInovacao {
   titulo: string;
   descricao: string;
   resumo?: string;
-  localizacao: string;
+  // Campos de localização atualizados
+  cidade?: string;
+  estado?: string;
   bairro?: string;
+  cep?: string;
+  localizacao?: string; // Para compatibilidade com dados antigos
   categoria: string;
   subcategoria?: string;
   imagem_url?: string;
@@ -52,9 +56,14 @@ export interface DatabaseCasoInovacao {
   data_fim?: string;
   status?: string;
   tags?: string[];
+  // Campos da equipe do projeto
   contato_nome?: string;
   contato_email?: string;
   contato_telefone?: string;
+  // Redes sociais
+  instagram_url?: string;
+  facebook_url?: string;
+  whatsapp?: string;
   extensionista_id: string;
   status_ativo: boolean;
   visualizacoes?: number;
@@ -75,14 +84,32 @@ export const getCasos = async (): Promise<CasoInovacao[]> => {
 
   if (error) throw error;
   
-  // Mapear dados para manter compatibilidade
+  // Imagens de exemplo por categoria (usadas quando não há imagem)
+  const categoryImages: Record<string, string> = {
+    'Educação': 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&h=600&fit=crop&crop=center',
+    'Saúde': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop&crop=center',
+    'Meio Ambiente': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center',
+    'Cultura': 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=600&fit=crop&crop=center',
+    'Tecnologia': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center',
+    'Empreendedorismo': 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=800&h=600&fit=crop&crop=center',
+    'Inclusão Social': 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=600&fit=crop&crop=center',
+    'Urbanismo': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop&crop=center',
+    'Alimentação': 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800&h=600&fit=crop&crop=center',
+    'Esporte': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&crop=center',
+  };
+  
+  // Mapear dados para manter compatibilidade e adicionar imagens
   return (data || []).map(caso => ({
     ...caso,
     data_cadastro: caso.created_at, // Para compatibilidade
     coordenadas_mapa: caso.coordenadas_lat && caso.coordenadas_lng ? {
       lat: caso.coordenadas_lat,
       lng: caso.coordenadas_lng
-    } : undefined
+    } : undefined,
+    // Garantir que sempre tenha uma imagem
+    imagem_url: caso.imagem_url || categoryImages[caso.categoria] || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop&crop=center',
+    // Garantir que tenha resumo
+    resumo: caso.resumo || (caso.descricao ? caso.descricao.substring(0, 120) + '...' : 'Resumo não disponível')
   }));
 };
 
@@ -99,6 +126,20 @@ export const getCasosByCategory = async (categoria: string): Promise<CasoInovaca
 
   if (error) throw error;
   
+  // Mesmas imagens da função getCasos para consistência
+  const categoryImages: Record<string, string> = {
+    'Educação': 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&h=600&fit=crop&crop=center',
+    'Saúde': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop&crop=center',
+    'Meio Ambiente': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center',
+    'Cultura': 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=600&fit=crop&crop=center',
+    'Tecnologia': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center',
+    'Empreendedorismo': 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=800&h=600&fit=crop&crop=center',
+    'Inclusão Social': 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=600&fit=crop&crop=center',
+    'Urbanismo': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop&crop=center',
+    'Alimentação': 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800&h=600&fit=crop&crop=center',
+    'Esporte': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&crop=center',
+  };
+  
   // Mapear dados para manter compatibilidade
   return (data || []).map(caso => ({
     ...caso,
@@ -106,7 +147,11 @@ export const getCasosByCategory = async (categoria: string): Promise<CasoInovaca
     coordenadas_mapa: caso.coordenadas_lat && caso.coordenadas_lng ? {
       lat: caso.coordenadas_lat,
       lng: caso.coordenadas_lng
-    } : undefined
+    } : undefined,
+    // Garantir que sempre tenha uma imagem
+    imagem_url: caso.imagem_url || categoryImages[caso.categoria] || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop&crop=center',
+    // Garantir que tenha resumo
+    resumo: caso.resumo || (caso.descricao ? caso.descricao.substring(0, 120) + '...' : 'Resumo não disponível')
   }));
 };
 
@@ -479,4 +524,282 @@ export const deleteAvatar = async (userId: string, currentAvatarUrl?: string): P
   await updateUser(userId, { avatar_url: null });
   
   console.log('✅ deleteAvatar: Avatar removido com sucesso');
+};
+
+// ============================================================================
+// FUNÇÕES PARA GERENCIAMENTO DE CASOS
+// ============================================================================
+
+export const getAllCasos = async (): Promise<CasoInovacao[]> => {
+  console.log('📋 getAllCasos: Buscando todos os casos...');
+  
+  const { data, error } = await supabase
+    .from('casos_inovacao')
+    .select(`
+      *,
+      extensionista:usuarios(*)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('❌ getAllCasos: Erro ao buscar casos:', error);
+    throw error;
+  }
+  
+  console.log('✅ getAllCasos: Encontrados', data?.length || 0, 'casos');
+  
+  // Mesmas imagens para consistência
+  const categoryImages: Record<string, string> = {
+    'Educação': 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&h=600&fit=crop&crop=center',
+    'Saúde': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop&crop=center',
+    'Meio Ambiente': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center',
+    'Cultura': 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=600&fit=crop&crop=center',
+    'Tecnologia': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center',
+    'Empreendedorismo': 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=800&h=600&fit=crop&crop=center',
+    'Inclusão Social': 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=600&fit=crop&crop=center',
+    'Urbanismo': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop&crop=center',
+    'Alimentação': 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800&h=600&fit=crop&crop=center',
+    'Esporte': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&crop=center',
+  };
+  
+  return (data || []).map(caso => ({
+    ...caso,
+    data_cadastro: caso.created_at,
+    coordenadas_mapa: caso.coordenadas_lat && caso.coordenadas_lng ? {
+      lat: caso.coordenadas_lat,
+      lng: caso.coordenadas_lng
+    } : undefined,
+    // Garantir que sempre tenha uma imagem
+    imagem_url: caso.imagem_url || categoryImages[caso.categoria] || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop&crop=center',
+    // Garantir que tenha resumo
+    resumo: caso.resumo || (caso.descricao ? caso.descricao.substring(0, 120) + '...' : 'Resumo não disponível')
+  }));
+};
+
+export const getCasoById = async (casoId: string): Promise<CasoInovacao | null> => {
+  console.log('🔍 getCasoById: Buscando caso com ID:', casoId);
+  
+  const { data, error } = await supabase
+    .from('casos_inovacao')
+    .select(`
+      *,
+      extensionista:usuarios(*)
+    `)
+    .eq('id', casoId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      console.warn('⚠️ getCasoById: Caso não encontrado:', casoId);
+      return null;
+    }
+    console.error('❌ getCasoById: Erro ao buscar caso:', error);
+    throw error;
+  }
+  
+  console.log('✅ getCasoById: Caso encontrado:', data.titulo);
+  
+  // Mesmas imagens para consistência
+  const categoryImages: Record<string, string> = {
+    'Educação': 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&h=600&fit=crop&crop=center',
+    'Saúde': 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&h=600&fit=crop&crop=center',
+    'Meio Ambiente': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center',
+    'Cultura': 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&h=600&fit=crop&crop=center',
+    'Tecnologia': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=600&fit=crop&crop=center',
+    'Empreendedorismo': 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=800&h=600&fit=crop&crop=center',
+    'Inclusão Social': 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=600&fit=crop&crop=center',
+    'Urbanismo': 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop&crop=center',
+    'Alimentação': 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800&h=600&fit=crop&crop=center',
+    'Esporte': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&crop=center',
+  };
+  
+  return {
+    ...data,
+    data_cadastro: data.created_at,
+    coordenadas_mapa: data.coordenadas_lat && data.coordenadas_lng ? {
+      lat: data.coordenadas_lat,
+      lng: data.coordenadas_lng
+    } : undefined,
+    // Garantir que sempre tenha uma imagem
+    imagem_url: data.imagem_url || categoryImages[data.categoria] || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=600&fit=crop&crop=center',
+    // Garantir que tenha resumo
+    resumo: data.resumo || (data.descricao ? data.descricao.substring(0, 120) + '...' : 'Resumo não disponível')
+  };
+};
+
+export const createCaso = async (casoData: Omit<DatabaseCasoInovacao, 'id' | 'created_at' | 'updated_at'>): Promise<CasoInovacao> => {
+  console.log('🆕 createCaso: Criando caso:', casoData.titulo);
+  
+  const { data, error } = await supabase
+    .from('casos_inovacao')
+    .insert([casoData])
+    .select(`
+      *,
+      extensionista:usuarios(*)
+    `)
+    .single();
+
+  if (error) {
+    console.error('❌ createCaso: Erro ao criar caso:', error);
+    throw error;
+  }
+
+  console.log('✅ createCaso: Caso criado com sucesso:', data.titulo);
+  
+  return {
+    ...data,
+    data_cadastro: data.created_at,
+    coordenadas_mapa: data.coordenadas_lat && data.coordenadas_lng ? {
+      lat: data.coordenadas_lat,
+      lng: data.coordenadas_lng
+    } : undefined
+  };
+};
+
+export const updateCaso = async (casoId: string, updates: Partial<DatabaseCasoInovacao>): Promise<CasoInovacao> => {
+  console.log('✏️ updateCaso: Atualizando caso:', casoId);
+  
+  // Remove campos que não devem ser atualizados
+  const { id, created_at, updated_at, ...validUpdates } = updates;
+  
+  const { data, error } = await supabase
+    .from('casos_inovacao')
+    .update(validUpdates)
+    .eq('id', casoId)
+    .select(`
+      *,
+      extensionista:usuarios(*)
+    `);
+
+  if (error) {
+    console.error('❌ updateCaso: Erro ao atualizar caso:', error);
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('Caso não encontrado ou não foi possível atualizar');
+  }
+
+  const updatedCaso = data[0];
+  console.log('✅ updateCaso: Caso atualizado com sucesso:', updatedCaso.titulo);
+  
+  return {
+    ...updatedCaso,
+    data_cadastro: updatedCaso.created_at,
+    coordenadas_mapa: updatedCaso.coordenadas_lat && updatedCaso.coordenadas_lng ? {
+      lat: updatedCaso.coordenadas_lat,
+      lng: updatedCaso.coordenadas_lng
+    } : undefined
+  };
+};
+
+export const deleteCaso = async (casoId: string): Promise<void> => {
+  console.log('🗑️ deleteCaso: Removendo caso:', casoId);
+  
+  const { error } = await supabase
+    .from('casos_inovacao')
+    .delete()
+    .eq('id', casoId);
+
+  if (error) {
+    console.error('❌ deleteCaso: Erro ao remover caso:', error);
+    throw error;
+  }
+
+  console.log('✅ deleteCaso: Caso removido com sucesso');
+};
+
+export const toggleCasoStatus = async (casoId: string, statusAtivo: boolean): Promise<CasoInovacao> => {
+  console.log('🔄 toggleCasoStatus: Alterando status do caso:', casoId, 'para', statusAtivo);
+  
+  const { data, error } = await supabase
+    .from('casos_inovacao')
+    .update({ status_ativo: statusAtivo })
+    .eq('id', casoId)
+    .select(`
+      *,
+      extensionista:usuarios(*)
+    `)
+    .single();
+
+  if (error) {
+    console.error('❌ toggleCasoStatus: Erro ao alterar status:', error);
+    throw error;
+  }
+
+  console.log('✅ toggleCasoStatus: Status alterado com sucesso');
+  
+  return {
+    ...data,
+    data_cadastro: data.created_at,
+    coordenadas_mapa: data.coordenadas_lat && data.coordenadas_lng ? {
+      lat: data.coordenadas_lat,
+      lng: data.coordenadas_lng
+    } : undefined
+  };
+};
+
+// Funções para upload de imagens de casos
+export const uploadCaseImage = async (file: File, casoId?: string): Promise<string> => {
+  console.log('📸 uploadCaseImage: Fazendo upload de imagem do caso');
+  
+  // Validar arquivo
+  if (file.size > 1 * 1024 * 1024) { // 1MB
+    throw new Error('Arquivo muito grande. Máximo 1MB.');
+  }
+  
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Apenas imagens são permitidas.');
+  }
+  
+  // Gerar nome único para o arquivo
+  const fileExt = file.name.split('.').pop();
+  const tempId = casoId || 'temp-' + Date.now();
+  const fileName = `${tempId}-${Date.now()}.${fileExt}`;
+  const filePath = `casos/${fileName}`;
+  
+  // Upload para o storage
+  const { error: uploadError } = await supabase.storage
+    .from('case-images')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true
+    });
+    
+  if (uploadError) {
+    console.error('❌ uploadCaseImage: Erro no upload:', uploadError);
+    throw uploadError;
+  }
+  
+  // Obter URL pública
+  const { data } = supabase.storage
+    .from('case-images')
+    .getPublicUrl(filePath);
+    
+  console.log('✅ uploadCaseImage: Imagem enviada com sucesso:', data.publicUrl);
+  return data.publicUrl;
+};
+
+export const deleteCaseImage = async (imageUrl: string): Promise<void> => {
+  console.log('🗑️ deleteCaseImage: Removendo imagem do caso');
+  
+  try {
+    const url = new URL(imageUrl);
+    const pathParts = url.pathname.split('/');
+    const fileName = pathParts[pathParts.length - 1];
+    const filePath = `casos/${fileName}`;
+    
+    // Remover arquivo do storage
+    const { error: deleteError } = await supabase.storage
+      .from('case-images')
+      .remove([filePath]);
+      
+    if (deleteError) {
+      console.warn('⚠️ deleteCaseImage: Erro ao remover arquivo do storage:', deleteError);
+    }
+  } catch (error) {
+    console.warn('⚠️ deleteCaseImage: Erro ao processar URL da imagem:', error);
+  }
+  
+  console.log('✅ deleteCaseImage: Imagem removida com sucesso');
 };

@@ -18,8 +18,12 @@ export interface CasoInovacao {
   titulo: string;
   descricao: string;
   resumo?: string;
-  localizacao: string;
+  // Campos de localização atualizados
+  cidade?: string;
+  estado?: string;
   bairro?: string;
+  cep?: string;
+  localizacao?: string; // Para compatibilidade com dados antigos
   categoria: string;
   subcategoria?: string;
   imagem_url?: string;
@@ -37,9 +41,14 @@ export interface CasoInovacao {
   data_fim?: string;
   status?: 'planejamento' | 'ativo' | 'concluido' | 'pausado';
   tags?: string[];
+  // Campos da equipe do projeto
   contato_nome?: string;
   contato_email?: string;
   contato_telefone?: string;
+  // Redes sociais
+  instagram_url?: string;
+  facebook_url?: string;
+  whatsapp?: string;
   extensionista_id: string;
   status_ativo: boolean;
   visualizacoes?: number;

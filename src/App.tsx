@@ -5,9 +5,13 @@ import { Footer } from './components/common/Footer';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Home } from './pages/Home';
 import { Casos } from './pages/Casos';
+import { CasoDetalhes } from './pages/CasoDetalhes';
+import { Categorias } from './pages/Categorias';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import { UserManagement } from './pages/admin/UserManagement';
+import { CaseManagement } from './pages/admin/CaseManagement';
+import { CaseEditor } from './pages/admin/CaseEditor';
 import { ROUTES } from './utils/constants';
 
 function App() {
@@ -20,6 +24,7 @@ function App() {
             <Routes>
               <Route path={ROUTES.HOME} element={<Home />} />
               <Route path={ROUTES.CASOS} element={<Casos />} />
+              <Route path="/caso/:id" element={<CasoDetalhes />} />
               <Route path={ROUTES.LOGIN} element={<Login />} />
               
               {/* Protected Routes */}
@@ -42,8 +47,26 @@ function App() {
                 } 
               />
               
-              {/* Placeholders para futuras páginas */}
-              <Route path="/categorias" element={<PlaceholderPage title="Categorias" />} />
+              <Route 
+                path={ROUTES.ADMIN_CASES} 
+                element={
+                  <ProtectedRoute adminOnly>
+                    <CaseManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path={`${ROUTES.ADMIN_CASE_EDIT}/:id`} 
+                element={
+                  <ProtectedRoute adminOnly>
+                    <CaseEditor />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Páginas públicas */}
+              <Route path="/categorias" element={<Categorias />} />
               <Route path="/mapa" element={<PlaceholderPage title="Mapa" />} />
               <Route path="/sobre" element={<PlaceholderPage title="Sobre" />} />
               <Route path="/contato" element={<PlaceholderPage title="Contato" />} />

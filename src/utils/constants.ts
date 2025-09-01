@@ -8,6 +8,8 @@ export const ROUTES = {
   LOGIN: '/login',
   PROFILE: '/perfil',
   ADMIN_USERS: '/admin/usuarios',
+  ADMIN_CASES: '/admin/casos',
+  ADMIN_CASE_EDIT: '/admin/casos/editar',
 } as const;
 
 export const CATEGORIES = [
