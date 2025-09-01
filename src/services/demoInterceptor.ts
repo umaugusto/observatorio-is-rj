@@ -98,7 +98,7 @@ export class DemoInterceptor {
     return demoCases.find(caso => caso.id === id) || null;
   }
 
-  static async createCaso(caseData: Partial<CasoInovacao>): Promise<CasoInovacao> {
+  static async createCaso(caseData: any): Promise<CasoInovacao> {
     await this.delay();
     const newCase: CasoInovacao = {
       id: `demo-case-${Date.now()}`,
@@ -132,7 +132,7 @@ export class DemoInterceptor {
     return newCase;
   }
 
-  static async updateCaso(id: string, updates: Partial<CasoInovacao>): Promise<CasoInovacao> {
+  static async updateCaso(id: string, updates: any): Promise<CasoInovacao> {
     await this.delay();
     const existingCase = demoCases.find(c => c.id === id);
     if (!existingCase) throw new Error('Caso não encontrado');

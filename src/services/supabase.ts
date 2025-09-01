@@ -187,6 +187,9 @@ export const getCasosByCategory = async (categoria: string): Promise<CasoInovaca
 };
 
 export const getUser = async (userId: string): Promise<User | null> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.getUser(userId);
+  }
   console.log('🔍 getUser: Buscando usuário com ID:', userId);
   
   // Criar uma Promise com timeout mais rápido para produção
@@ -688,6 +691,9 @@ export const getCasoById = async (casoId: string): Promise<CasoInovacao | null> 
 };
 
 export const createCaso = async (casoData: Omit<DatabaseCasoInovacao, 'id' | 'created_at' | 'updated_at'>): Promise<CasoInovacao> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.createCaso(casoData);
+  }
   console.log('🆕 createCaso: Criando caso:', casoData.titulo);
   
   const { data, error } = await supabase
@@ -717,6 +723,9 @@ export const createCaso = async (casoData: Omit<DatabaseCasoInovacao, 'id' | 'cr
 };
 
 export const updateCaso = async (casoId: string, updates: Partial<DatabaseCasoInovacao>): Promise<CasoInovacao> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.updateCaso(casoId, updates);
+  }
   console.log('✏️ updateCaso: Atualizando caso:', casoId);
   
   // Remove campos que não devem ser atualizados
@@ -754,6 +763,9 @@ export const updateCaso = async (casoId: string, updates: Partial<DatabaseCasoIn
 };
 
 export const deleteCaso = async (casoId: string): Promise<void> => {
+  if (isDemoMode()) {
+    return DemoInterceptor.deleteCaso(casoId);
+  }
   console.log('🗑️ deleteCaso: Removendo caso:', casoId);
   
   const { error } = await supabase
