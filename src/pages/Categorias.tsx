@@ -70,7 +70,6 @@ const getCategoryBg = (categoria: string): string => {
 
 export const Categorias = () => {
   const [casos, setCasos] = useState<CasoInovacao[]>([]); // Todos os casos para big numbers globais
-  const [casosValidos, setCasosValidos] = useState<CasoInovacao[]>([]); // Casos com categoria válida
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoriaStats, setCategoriaStats] = useState<CategoriaStats[]>([]);
@@ -137,7 +136,6 @@ export const Categorias = () => {
         });
 
         setCategoriaStats(stats);
-        setCasosValidos(casosValidos); // Casos válidos para categorias
         // setCasos já contém todos os casos para big numbers globais
       } catch (err) {
         setError('Erro ao carregar categorias');
