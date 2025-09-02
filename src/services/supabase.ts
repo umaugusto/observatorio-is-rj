@@ -1135,12 +1135,10 @@ export const getAllMessages = async (): Promise<ContactMessage[]> => {
   }
   console.log('📋 getAllMessages: Buscando todas as mensagens de contato');
   
+  // Correção temporária: removendo o relacionamento problemático
   const { data, error } = await supabase
     .from('mensagens_contato')
-    .select(`
-      *,
-      extensionista:usuarios!mensagens_contato_respondido_por_fkey(*)
-    `)
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -1171,14 +1169,12 @@ export const updateMessageStatus = async (messageId: string, status: 'lido' | 'r
     updateData.resposta = resposta;
   }
   
+  // Correção temporária: removendo o relacionamento problemático
   const { data, error } = await supabase
     .from('mensagens_contato')
     .update(updateData)
     .eq('id', messageId)
-    .select(`
-      *,
-      extensionista:usuarios!mensagens_contato_respondido_por_fkey(*)
-    `)
+    .select('*')
     .single();
 
   if (error) {
