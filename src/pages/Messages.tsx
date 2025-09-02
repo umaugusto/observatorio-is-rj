@@ -172,21 +172,34 @@ export const Messages = () => {
       <div className="container-custom py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">📬 Mensagens de Contato</h1>
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <p className="text-gray-600">
-              Visualize e gerencie todas as mensagens recebidas através do formulário de contato.
-            </p>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={showArchived}
-                onChange={(e) => setShowArchived(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm text-gray-600">Mostrar arquivadas</span>
-            </label>
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">📬 Mensagens de Contato</h1>
+            
+            {/* Toggle Arquivadas - Mais Visível */}
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
+              <span className="text-sm font-medium text-gray-700">Visualização:</span>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showArchived}
+                  onChange={(e) => setShowArchived(e.target.checked)}
+                  className="rounded text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Incluir arquivadas
+                </span>
+              </label>
+              {showArchived && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  {messages.filter(m => m.arquivado).length} arquivadas
+                </span>
+              )}
+            </div>
           </div>
+          
+          <p className="text-gray-600">
+            Visualize e gerencie todas as mensagens recebidas através do formulário de contato.
+          </p>
         </div>
 
         {/* Layout Master-Detail */}
@@ -194,48 +207,102 @@ export const Messages = () => {
           
           {/* Lista de Mensagens - Coluna Esquerda */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border overflow-hidden">
-            {/* Filtros */}
+            {/* Filtros Reformulados */}
             <div className="p-4 border-b bg-gray-50">
-              <div className="flex flex-wrap gap-2">
+              <div className="mb-2">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Filtrar por Status:</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  className={`p-3 rounded-lg text-sm font-medium transition-colors text-left ${
                     filter === 'all'
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
-                  Todas ({messages.length})
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span>📋</span>
+                      <span>Todas</span>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      filter === 'all' 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {messages.length}
+                    </span>
+                  </div>
                 </button>
+                
                 <button
                   onClick={() => setFilter('pendente')}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  className={`p-3 rounded-lg text-sm font-medium transition-colors text-left ${
                     filter === 'pendente'
-                      ? 'bg-yellow-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                      ? 'bg-yellow-600 text-white shadow-sm'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
-                  Pendentes ({messages.filter(m => m.status === 'pendente').length})
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span>⏳</span>
+                      <span>Pendentes</span>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      filter === 'pendente' 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {messages.filter(m => m.status === 'pendente').length}
+                    </span>
+                  </div>
                 </button>
+                
                 <button
                   onClick={() => setFilter('lido')}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  className={`p-3 rounded-lg text-sm font-medium transition-colors text-left ${
                     filter === 'lido'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
-                  Lidas ({messages.filter(m => m.status === 'lido').length})
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span>👀</span>
+                      <span>Lidas</span>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      filter === 'lido' 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {messages.filter(m => m.status === 'lido').length}
+                    </span>
+                  </div>
                 </button>
+                
                 <button
                   onClick={() => setFilter('respondido')}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  className={`p-3 rounded-lg text-sm font-medium transition-colors text-left ${
                     filter === 'respondido'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border'
+                      ? 'bg-green-600 text-white shadow-sm'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                   }`}
                 >
-                  Respondidas ({messages.filter(m => m.status === 'respondido').length})
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span>✅</span>
+                      <span>Respondidas</span>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      filter === 'respondido' 
+                        ? 'bg-white/20 text-white' 
+                        : 'bg-green-100 text-green-700'
+                    }`}>
+                      {messages.filter(m => m.status === 'respondido').length}
+                    </span>
+                  </div>
                 </button>
               </div>
             </div>
@@ -265,9 +332,14 @@ export const Messages = () => {
                       }`}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-gray-900 text-sm line-clamp-1">
-                          {message.assunto}
-                        </h4>
+                        <div className="flex-1">
+                          <div className="text-xs text-gray-500 mb-1">
+                            <span className="font-medium">Assunto:</span>
+                          </div>
+                          <h4 className="font-semibold text-gray-900 text-sm line-clamp-1">
+                            {message.assunto}
+                          </h4>
+                        </div>
                         <div className="flex gap-1 ml-2 flex-shrink-0">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(message.status)}`}>
                             {message.status.charAt(0).toUpperCase() + message.status.slice(1)}
@@ -285,13 +357,38 @@ export const Messages = () => {
                         </div>
                       </div>
                       <div className="text-sm text-gray-600 mb-2">
-                        <strong>{message.nome}</strong>
+                        <div className="text-xs text-gray-500">
+                          <span className="font-medium">Contato:</span>
+                        </div>
+                        <strong>{message.nome}</strong> • {message.email}
                       </div>
-                      <p className="text-sm text-gray-700 line-clamp-2 mb-2">
-                        {message.mensagem}
-                      </p>
-                      <div className="text-xs text-gray-500">
-                        {new Date(message.created_at).toLocaleDateString('pt-BR')}
+                      <div className="mb-2">
+                        <div className="text-xs text-gray-500 mb-1">
+                          <span className="font-medium">Mensagem:</span>
+                        </div>
+                        <p className="text-sm text-gray-700 line-clamp-2">
+                          {message.mensagem}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-gray-500">
+                          <span className="font-medium">Enviado:</span> {new Date(message.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+                        {/* Botão Arquivar na lista */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevenir seleção da mensagem
+                            handleArchiveMessage(message.id, !message.arquivado);
+                          }}
+                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                            message.arquivado
+                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                          }`}
+                          title={message.arquivado ? 'Desarquivar mensagem' : 'Arquivar mensagem'}
+                        >
+                          {message.arquivado ? '📂' : '🗄️'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -347,39 +444,32 @@ export const Messages = () => {
 
                   {/* Controles */}
                   <div className="flex flex-wrap gap-3">
-                    {/* Dropdown de Status */}
-                    <select
-                      value={selectedMessage.status}
-                      onChange={(e) => handleStatusChange(selectedMessage.id, e.target.value as 'pendente' | 'lido' | 'respondido')}
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                      <option value="pendente">Pendente</option>
-                      <option value="lido">Lida</option>
-                      <option value="respondido">Respondida</option>
-                    </select>
+                    {/* Dropdown de Status com Conclusão */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-gray-700">Status da Mensagem</label>
+                      <select
+                        value={selectedMessage.status}
+                        onChange={(e) => handleStatusChange(selectedMessage.id, e.target.value as 'pendente' | 'lido' | 'respondido')}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[140px]"
+                      >
+                        <option value="pendente">📋 Pendente</option>
+                        <option value="lido">👀 Lida</option>
+                        <option value="respondido">✅ Respondida</option>
+                      </select>
+                    </div>
 
-                    {/* Toggle Concluído */}
-                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={selectedMessage.concluido || false}
-                        onChange={(e) => handleToggleComplete(selectedMessage.id, !e.target.checked)}
-                        className="rounded"
-                      />
-                      <span className="text-sm font-medium">Concluída</span>
-                    </label>
-
-                    {/* Botão Arquivar */}
-                    <button
-                      onClick={() => handleArchiveMessage(selectedMessage.id, !selectedMessage.arquivado)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        selectedMessage.arquivado
-                          ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
-                    >
-                      {selectedMessage.arquivado ? '📂 Desarquivar' : '🗄️ Arquivar'}
-                    </button>
+                    {/* Dropdown de Conclusão */}
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-gray-700">Status da Tarefa</label>
+                      <select
+                        value={selectedMessage.concluido ? 'concluida' : 'pendente'}
+                        onChange={(e) => handleToggleComplete(selectedMessage.id, e.target.value === 'pendente')}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[140px]"
+                      >
+                        <option value="pendente">⏳ Em Andamento</option>
+                        <option value="concluida">✅ Concluída</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
