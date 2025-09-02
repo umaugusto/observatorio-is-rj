@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install                 # Install dependencies
-npm run dev                # Start development server (localhost:5173)
+npm run dev                # Start development server (configured for localhost:3000)
 npm run build              # Production build (TypeScript + Vite)
 npm run lint               # ESLint check (must pass with 0 warnings)
 npm run preview            # Preview production build
@@ -204,6 +204,7 @@ src/
 - **Cases** (`src/pages/Casos.tsx`): Enhanced case listing with visual category filters and pagination
 - **Categories** (`src/pages/Categorias.tsx`): Category overview with recent cases and fixed action buttons
 - **Case Details** (`src/pages/CasoDetalhes.tsx`): Tab-based case viewing with interactive map
+- **About** (`src/pages/Sobre.tsx`): Project information, methodology, and institutional details based on academic documentation
 - **Login** (`src/pages/Login.tsx`): Authentication with new Designário branding
 
 ### Admin Pages
@@ -275,6 +276,11 @@ src/
 - **Error handling**: Always wrap Supabase calls in try/catch with user-friendly messages
 - **Console logging**: Use emoji prefixes for debugging (🔍, ✅, ❌, 🔑, 🚨)
 - **Responsive design**: Mobile-first approach with Tailwind classes
+
+### Server Configuration
+- **Development server**: Vite configured for `localhost:3000` with CORS enabled
+- **Host configuration**: `host: true` allows external connections
+- **Port fallback**: If port 3000 is occupied, Vite will automatically use next available port
 
 ### Database Operations
 - **Timeout handling**: Use 5-second timeouts for queries that may hang
