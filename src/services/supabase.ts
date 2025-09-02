@@ -1150,7 +1150,7 @@ export const getAllMessages = async (): Promise<ContactMessage[]> => {
   return data || [];
 };
 
-export const updateMessageStatus = async (messageId: string, status: 'lido' | 'respondido', userId?: string, resposta?: string): Promise<ContactMessage> => {
+export const updateMessageStatus = async (messageId: string, status: 'pendente' | 'lido' | 'respondido', userId?: string, resposta?: string): Promise<ContactMessage> => {
   if (isDemoMode()) {
     await DemoInterceptor.updateMessageStatus(messageId, status);
     // Return mock updated message
@@ -1159,7 +1159,10 @@ export const updateMessageStatus = async (messageId: string, status: 'lido' | 'r
   }
   console.log('✏️ updateMessageStatus: Atualizando status da mensagem:', messageId, 'para', status);
   
-  const updateData: any = { status };
+  const updateData: any = { 
+    status,
+    updated_at: new Date().toISOString()
+  };
   
   if (userId) {
     updateData.respondido_por = userId;
@@ -1169,7 +1172,6 @@ export const updateMessageStatus = async (messageId: string, status: 'lido' | 'r
     updateData.resposta = resposta;
   }
   
-  // Correção temporária: removendo o relacionamento problemático
   const { data, error } = await supabase
     .from('mensagens_contato')
     .update(updateData)
@@ -1183,6 +1185,35 @@ export const updateMessageStatus = async (messageId: string, status: 'lido' | 'r
   }
 
   console.log('✅ updateMessageStatus: Status atualizado com sucesso');
+  return data;
+};
+
+export const toggleMessageComplete = async (messageId: string, concluido: boolean, _userId: string): Promise<ContactMessage> => {
+  if (isDemoMode()) {
+    console.log('🎭 Demo: Simulando toggleMessageComplete:', messageId, concluido);
+    const messages = await DemoInterceptor.getAllMessages();
+    return messages.find(m => m.id === messageId) || {} as ContactMessage;
+  }
+  console.log('✏️ toggleMessageComplete: Alterando mensagem:', messageId, 'para concluido:', concluido);
+  
+  const updateData = { 
+    concluido,
+    updated_at: new Date().toISOString()
+  };
+  
+  const { data, error } = await supabase
+    .from('mensagens_contato')
+    .update(updateData)
+    .eq('id', messageId)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('❌ toggleMessageComplete: Erro ao atualizar mensagem:', error);
+    throw error;
+  }
+
+  console.log('✅ toggleMessageComplete: Mensagem atualizada com sucesso');
   return data;
 };
 

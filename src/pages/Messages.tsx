@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllMessages, updateMessageStatus } from '../services/supabase';
+import { getAllMessages, updateMessageStatus, toggleMessageComplete } from '../services/supabase';
 import { useAuth } from '../hooks/useAuth';
 import type { ContactMessage } from '../types';
 import { CONTACT_TYPES_LABELS } from '../utils/constants';
@@ -10,7 +10,7 @@ export const Messages = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pendente' | 'lido' | 'respondido'>('all');
 
-  const { } = useAuth();
+  const { user } = useAuth();
 
   const loadMessages = async () => {
     try {
@@ -31,18 +31,54 @@ export const Messages = () => {
   }, []);
 
   const handleMarkAsRead = async (messageId: string) => {
+    if (!user) return;
     try {
-      await updateMessageStatus(messageId, 'lido');
+      await updateMessageStatus(messageId, 'lido', user.id);
       setMessages(prev => 
         prev.map(msg => 
           msg.id === messageId 
-            ? { ...msg, status: 'lido' }
+            ? { ...msg, status: 'lido', respondido_por: user.id }
             : msg
         )
       );
       console.log('✅ Mensagem marcada como lida');
     } catch (err: any) {
       console.error('❌ Erro ao marcar como lida:', err);
+    }
+  };
+
+  const handleMarkAsPending = async (messageId: string) => {
+    if (!user) return;
+    try {
+      await updateMessageStatus(messageId, 'pendente');
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, status: 'pendente', respondido_por: undefined }
+            : msg
+        )
+      );
+      console.log('✅ Mensagem marcada como pendente');
+    } catch (err: any) {
+      console.error('❌ Erro ao marcar como pendente:', err);
+    }
+  };
+
+  const handleToggleComplete = async (messageId: string, currentComplete: boolean) => {
+    if (!user) return;
+    try {
+      const newComplete = !currentComplete;
+      await toggleMessageComplete(messageId, newComplete, user.id);
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, concluido: newComplete }
+            : msg
+        )
+      );
+      console.log(`✅ Mensagem marcada como ${newComplete ? 'concluída' : 'não concluída'}`);
+    } catch (err: any) {
+      console.error('❌ Erro ao alterar status de conclusão:', err);
     }
   };
 
@@ -185,7 +221,7 @@ export const Messages = () => {
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <h3 className="text-lg font-semibold text-gray-900">
                           {message.assunto}
                         </h3>
@@ -195,6 +231,11 @@ export const Messages = () => {
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(message.tipo_solicitacao)}`}>
                           {CONTACT_TYPES_LABELS[message.tipo_solicitacao]}
                         </span>
+                        {message.concluido && (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            ✅ Concluída
+                          </span>
+                        )}
                       </div>
                       <div className="text-sm text-gray-600 mb-3">
                         <strong>{message.nome}</strong> • {message.email}
@@ -209,16 +250,38 @@ export const Messages = () => {
                     </div>
                   </div>
                   
-                  {message.status === 'pendente' && (
-                    <div className="flex gap-2 pt-4 border-t">
+                  <div className="flex gap-2 pt-4 border-t flex-wrap">
+                    {/* Botões de Status */}
+                    {message.status === 'pendente' && (
                       <button
                         onClick={() => handleMarkAsRead(message.id)}
                         className="btn-secondary text-sm"
                       >
-                        Marcar como Lida
+                        📖 Marcar como Lida
                       </button>
-                    </div>
-                  )}
+                    )}
+                    
+                    {message.status === 'lido' && (
+                      <button
+                        onClick={() => handleMarkAsPending(message.id)}
+                        className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        ⏳ Marcar como Pendente
+                      </button>
+                    )}
+                    
+                    {/* Botão de Conclusão */}
+                    <button
+                      onClick={() => handleToggleComplete(message.id, message.concluido || false)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        message.concluido
+                          ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                          : 'bg-green-100 text-green-800 hover:bg-green-200'
+                      }`}
+                    >
+                      {message.concluido ? '❌ Marcar como Não Concluída' : '✅ Marcar como Concluída'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

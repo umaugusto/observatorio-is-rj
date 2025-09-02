@@ -169,8 +169,8 @@ src/
 #### Logo & Branding
 - Logo component: `<Logo />` in `src/components/common/Logo.tsx`
 - Features: Open book with growth arrow, available in multiple sizes
-- Brand name: **Designário** 
-- Subtitle: **Observatório de Inovação Social**
+- Brand name: **Designário** (color: `#002f42`)
+- Subtitle: **Observatório de Inovação Social** (background: `#ff6b6b`, white text)
 - Favicon: `/favicon.svg` (book + arrow icon)
 
 #### User Type Badge Colors
@@ -243,6 +243,7 @@ src/
 
 ### Main Pages
 - **Home** (`src/pages/Home.tsx`): Hero section with Rio de Janeiro background image, stats, and bento box case layout
+- **Dashboard** (`src/pages/Dashboard.tsx`): Extensionist control center with colored shortcut cards for main functions
 - **Cases** (`src/pages/Casos.tsx`): Enhanced case listing with visual category filters and pagination
 - **Categories** (`src/pages/Categorias.tsx`): Category overview with recent cases and fixed action buttons
 - **Case Details** (`src/pages/CasoDetalhes.tsx`): Tab-based case viewing with interactive map
@@ -386,3 +387,64 @@ src/
 2. Create root user with email and password
 3. User automatically has `is_admin: true` and `is_root: true`
 4. Use only when no admin access available
+
+## Dashboard System
+
+### Extensionist Control Center
+- **Route**: `/dashboard` - Protected route for authenticated users only
+- **Purpose**: Central hub for extensionists and administrators to access main functions
+- **Access**: "Área do Extensionista" button on Home page redirects here
+
+### Dashboard Features
+- **Personalized greeting** with first name extraction
+- **Grid layout**: Responsive 3-column grid on desktop, adaptive on mobile
+- **Color-coded cards** with consistent hover effects and animations
+- **Real-time notifications** for unread messages with badge counter
+- **Role-based visibility**: Admin-only cards (User Management) shown conditionally
+
+### Available Shortcuts
+1. **📊 Gerenciar Casos** (Blue) → `/admin/casos` - Case CRUD operations
+2. **👥 Gerenciar Usuários** (Purple, Admin only) → `/admin/usuarios` - User management
+3. **📬 Mensagens** (Green) → `/mensagens` - Contact messages with unread counter
+4. **👤 Meu Perfil** (Orange) → `/perfil` - Personal profile settings
+5. **🗺️ Ver Mapa** (Teal) → `/mapa` - Interactive case map
+6. **🚪 Sair** (Red) - Logout functionality
+
+### Implementation Notes
+- Cards use Tailwind color system with hover effects (`hover:scale-105`)
+- Unread message count updates every 30 seconds via `setInterval`
+- User type badge shown at bottom (Demo, Extensionista, Admin, etc.)
+- Automatic navigation handling for non-authenticated users
+
+## Data Consistency & Statistics
+
+### Cross-Page Data Synchronization
+All pages showing case counts must display consistent numbers from the database:
+
+### Home Page Statistics
+- **All cases count**: Uses `allCasos.length` for accurate total count
+- **Visual limitation**: Only shows 6 most recent cases in card display
+- **Separation**: `casos` (6 items for display) vs `allCasos` (all items for stats)
+
+### Categories Page Statistics  
+- **Global numbers**: Uses all cases from database for header statistics
+- **Category filtering**: Only cases with valid categories for category-specific stats
+- **Validation**: Filters out NULL, empty, or invalid category names
+
+### Cases Page Consistency
+- **Filter**: Shows only active cases where `status_ativo = true`
+- **Count alignment**: Should match Home and Categories total counts
+
+### Statistical Accuracy
+```typescript
+// Home page: separate data for display vs statistics
+const [casos, setCasos] = useState<CasoInovacao[]>([]); // For display (limited)
+const [allCasos, setAllCasos] = useState<CasoInovacao[]>([]); // For statistics (all)
+
+// Categories page: all cases for global stats, filtered for categories
+const casosStats = {
+  total: allCasos.length, // Use all cases for accuracy
+  categorias: new Set(allCasos.map(caso => caso.categoria)).size,
+  extensionistas: new Set(allCasos.map(caso => caso.extensionista_id)).size,
+};
+```

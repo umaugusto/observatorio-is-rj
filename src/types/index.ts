@@ -71,6 +71,7 @@ export interface ContactMessage {
   mensagem: string;
   tipo_solicitacao: 'acesso' | 'duvida' | 'sugestao' | 'outro';
   status: 'pendente' | 'lido' | 'respondido';
+  concluido?: boolean;
   respondido_por?: string;
   resposta?: string;
   created_at: string;

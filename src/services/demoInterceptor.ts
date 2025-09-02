@@ -158,7 +158,7 @@ export class DemoInterceptor {
     return demoMessages;
   }
 
-  static async updateMessageStatus(messageId: string, status: 'lido' | 'respondido'): Promise<void> {
+  static async updateMessageStatus(messageId: string, status: 'pendente' | 'lido' | 'respondido'): Promise<void> {
     await this.delay();
     console.log('🎭 Demo: Simulando atualização de status da mensagem:', messageId, 'para', status);
   }
