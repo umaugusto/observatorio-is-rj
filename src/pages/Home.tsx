@@ -180,7 +180,8 @@ const CaseCardSmall = ({ caso }: { caso: CasoInovacao }) => {
 };
 
 export const Home = () => {
-  const [casos, setCasos] = useState<CasoInovacao[]>([]);
+  const [casos, setCasos] = useState<CasoInovacao[]>([]); // Para exibição (limitados)
+  const [allCasos, setAllCasos] = useState<CasoInovacao[]>([]); // Para estatísticas (todos)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dbConfigured, setDbConfigured] = useState<boolean | null>(null);
@@ -209,7 +210,8 @@ export const Home = () => {
   const loadCasos = async () => {
     try {
       const data = await getCasos();
-      setCasos(data.slice(0, 6)); // Mostrar apenas os 6 mais recentes
+      setAllCasos(data); // Todos os casos para estatísticas
+      setCasos(data.slice(0, 6)); // Apenas 6 mais recentes para exibição
       setError(null);
     } catch (err: any) {
       // Se o erro for de tabela não encontrada, mostrar setup
@@ -248,9 +250,9 @@ export const Home = () => {
   }
 
   const casosStats = {
-    total: casos.length,
-    categorias: new Set(casos.map(caso => caso.categoria)).size,
-    extensionistas: new Set(casos.map(caso => caso.extensionista_id)).size,
+    total: allCasos.length, // Usar todos os casos para estatísticas
+    categorias: new Set(allCasos.map(caso => caso.categoria)).size,
+    extensionistas: new Set(allCasos.map(caso => caso.extensionista_id)).size,
   };
 
   return (

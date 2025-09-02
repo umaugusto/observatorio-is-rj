@@ -51,10 +51,10 @@ export const Logo: React.FC<LogoProps> = ({
       {/* Texto do logo */}
       {showText && (
         <div className="flex flex-col">
-          <h1 className={`font-bold bg-gradient-to-r from-navy-600 to-secondary-600 bg-clip-text text-transparent leading-tight ${textSize}`}>
+          <h1 className={`font-bold text-blue-900 leading-tight ${textSize}`}>
             Designário
           </h1>
-          <span className={`text-secondary-700 font-medium leading-tight ${subtitleSize} tracking-wide`}>
+          <span className={`bg-primary-600 text-white px-2 py-0.5 rounded font-medium leading-tight ${subtitleSize} tracking-wide`}>
             OBSERVATÓRIO DE INOVAÇÃO SOCIAL
           </span>
         </div>
