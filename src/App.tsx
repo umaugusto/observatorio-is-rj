@@ -9,6 +9,7 @@ import { Home } from './pages/Home';
 import { Casos } from './pages/Casos';
 import { CasoDetalhes } from './pages/CasoDetalhes';
 import { Categorias } from './pages/Categorias';
+import { Sobre } from './pages/Sobre';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
 import { Contato } from './pages/Contato';
@@ -92,7 +93,7 @@ function App() {
               {/* Páginas públicas */}
               <Route path="/categorias" element={<Categorias />} />
               <Route path="/mapa" element={<PlaceholderPage title="Mapa" />} />
-              <Route path="/sobre" element={<PlaceholderPage title="Sobre" />} />
+              <Route path="/sobre" element={<Sobre />} />
               
               {/* 404 Page */}
               <Route path="*" element={<NotFound />} />
