@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { updateUser, uploadAvatar, deleteAvatar } from '../services/supabase';
+import { formatTelefone } from '../utils/formatters';
 import { Avatar } from '../components/common/Avatar';
 
 export const Profile = () => {
@@ -308,7 +309,7 @@ export const Profile = () => {
                   <input
                     type="tel"
                     value={formData.telefone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 ) : (

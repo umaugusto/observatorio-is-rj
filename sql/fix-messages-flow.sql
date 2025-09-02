@@ -79,13 +79,23 @@ ON mensagens_contato FOR INSERT
 TO anon, authenticated
 WITH CHECK (true);
 
--- 5. VERIFICAR SE CAMPO concluido EXISTE, SE NÃO CRIAR
+-- 5. VERIFICAR E ADICIONAR CAMPOS NECESSÁRIOS
 DO $$
 BEGIN
+    -- Adicionar campo concluido se não existir
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                    WHERE table_name = 'mensagens_contato' 
                    AND column_name = 'concluido') THEN
         ALTER TABLE mensagens_contato ADD COLUMN concluido BOOLEAN DEFAULT FALSE;
+        RAISE NOTICE 'Campo concluido adicionado à tabela mensagens_contato';
+    END IF;
+    
+    -- Verificar se campo telefone existe, se não adicionar
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'mensagens_contato' 
+                   AND column_name = 'telefone') THEN
+        ALTER TABLE mensagens_contato ADD COLUMN telefone TEXT;
+        RAISE NOTICE 'Campo telefone adicionado à tabela mensagens_contato';
     END IF;
 END
 $$;

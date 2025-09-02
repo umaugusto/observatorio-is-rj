@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllUsers, updateUser, deleteUser, toggleUserStatus, uploadAvatarOnly, createUserWithPassword, resetUserPassword as resetToDefaultPassword } from '../../services/supabase';
+import { formatTelefone } from '../../utils/formatters';
 import { Avatar } from '../../components/common/Avatar';
 import type { User } from '../../types';
 
@@ -740,7 +741,7 @@ const UserModal = ({ user, onClose, onSave, onError }: UserModalProps) => {
                     <input
                       type="tel"
                       value={formData.telefone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, telefone: formatTelefone(e.target.value) }))}
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="(21) 99999-9999"
                     />

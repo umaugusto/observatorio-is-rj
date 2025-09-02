@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { createContactMessage } from '../services/supabase';
 import { CONTACT_TYPES_LABELS, ROUTES } from '../utils/constants';
+import { formatTelefone } from '../utils/formatters';
 import type { ContactMessageInput } from '../types';
 
 export const Contato = () => {
@@ -34,9 +35,15 @@ export const Contato = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    let processedValue = value;
+    if (name === 'telefone') {
+      processedValue = formatTelefone(value);
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
   };
 
@@ -170,6 +177,7 @@ export const Contato = () => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="(11) 99999-9999"
+                  maxLength={15}
                 />
               </div>
 

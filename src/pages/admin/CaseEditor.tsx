@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getCasoById, createCaso, updateCaso } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { ROUTES, CATEGORIES } from '../../utils/constants';
+import { formatTelefone } from '../../utils/formatters';
 import type { CasoInovacao } from '../../types';
 import type { DatabaseCasoInovacao } from '../../services/supabase';
 
@@ -133,9 +134,14 @@ export const CaseEditor = () => {
         [name]: value ? parseFloat(value) : null
       }));
     } else {
+      let processedValue = value;
+      if (name === 'contato_telefone') {
+        processedValue = formatTelefone(value);
+      }
+      
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        [name]: processedValue
       }));
     }
   };
