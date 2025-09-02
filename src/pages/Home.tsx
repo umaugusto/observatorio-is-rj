@@ -296,8 +296,9 @@ export const Home = () => {
                 Explorar Casos
               </Link>
               <Link 
-                to={ROUTES.LOGIN} 
-                className="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-primary-600 transition-all duration-300"
+                to={ROUTES.DASHBOARD} 
+                className="px-8 py-4 bg-white/95 backdrop-blur-sm text-blue-900 font-semibold rounded-lg shadow-lg hover:bg-white hover:shadow-xl transition-all duration-300"
+                style={{ color: '#002f42' }}
               >
                 Área do Extensionista
               </Link>

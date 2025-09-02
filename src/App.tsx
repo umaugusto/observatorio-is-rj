@@ -13,6 +13,7 @@ import { Mapa } from './pages/Mapa';
 import { Sobre } from './pages/Sobre';
 import { Login } from './pages/Login';
 import { Profile } from './pages/Profile';
+import { Dashboard } from './pages/Dashboard';
 import { Contato } from './pages/Contato';
 import { Messages } from './pages/Messages';
 import { UserManagement } from './pages/admin/UserManagement';
@@ -50,6 +51,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path={ROUTES.DASHBOARD} 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
                   </ProtectedRoute>
                 } 
               />

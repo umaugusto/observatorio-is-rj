@@ -8,6 +8,7 @@ export const ROUTES = {
   MESSAGES: '/mensagens',
   LOGIN: '/login',
   PROFILE: '/perfil',
+  DASHBOARD: '/dashboard',
   ADMIN_USERS: '/admin/usuarios',
   ADMIN_CASES: '/admin/casos',
   ADMIN_CASE_EDIT: '/admin/casos/editar',
