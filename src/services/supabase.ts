@@ -1129,17 +1129,23 @@ export const createContactMessage = async (messageData: ContactMessageInput): Pr
   return data;
 };
 
-export const getAllMessages = async (): Promise<ContactMessage[]> => {
+export const getAllMessages = async (includeArchived: boolean = false): Promise<ContactMessage[]> => {
   if (isDemoMode()) {
     return DemoInterceptor.getAllMessages();
   }
-  console.log('📋 getAllMessages: Buscando todas as mensagens de contato');
+  console.log('📋 getAllMessages: Buscando mensagens de contato, incluir arquivadas:', includeArchived);
   
-  // Correção temporária: removendo o relacionamento problemático
-  const { data, error } = await supabase
+  let query = supabase
     .from('mensagens_contato')
     .select('*')
     .order('created_at', { ascending: false });
+
+  // Por padrão, não incluir mensagens arquivadas
+  if (!includeArchived) {
+    query = query.eq('arquivado', false);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('❌ getAllMessages: Erro ao buscar mensagens:', error);
@@ -1217,6 +1223,35 @@ export const toggleMessageComplete = async (messageId: string, concluido: boolea
   return data;
 };
 
+export const archiveMessage = async (messageId: string, arquivado: boolean): Promise<ContactMessage> => {
+  if (isDemoMode()) {
+    console.log('🎭 Demo: Simulando archiveMessage:', messageId, arquivado);
+    const messages = await DemoInterceptor.getAllMessages();
+    return messages.find(m => m.id === messageId) || {} as ContactMessage;
+  }
+  console.log('🗄️ archiveMessage: Alterando mensagem:', messageId, 'para arquivado:', arquivado);
+  
+  const updateData = { 
+    arquivado,
+    updated_at: new Date().toISOString()
+  };
+  
+  const { data, error } = await supabase
+    .from('mensagens_contato')
+    .update(updateData)
+    .eq('id', messageId)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('❌ archiveMessage: Erro ao arquivar mensagem:', error);
+    throw error;
+  }
+
+  console.log('✅ archiveMessage: Mensagem atualizada com sucesso');
+  return data;
+};
+
 export const getUnreadMessagesCount = async (): Promise<number> => {
   if (isDemoMode()) {
     return DemoInterceptor.getUnreadMessagesCount();
@@ -1226,7 +1261,8 @@ export const getUnreadMessagesCount = async (): Promise<number> => {
   const { count, error } = await supabase
     .from('mensagens_contato')
     .select('*', { count: 'exact', head: true })
-    .eq('status', 'pendente');
+    .eq('status', 'pendente')
+    .eq('arquivado', false);
 
   if (error) {
     console.error('❌ getUnreadMessagesCount: Erro ao contar mensagens:', error);

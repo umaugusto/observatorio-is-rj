@@ -97,6 +97,14 @@ BEGIN
         ALTER TABLE mensagens_contato ADD COLUMN telefone TEXT;
         RAISE NOTICE 'Campo telefone adicionado à tabela mensagens_contato';
     END IF;
+    
+    -- Adicionar campo arquivado se não existir
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'mensagens_contato' 
+                   AND column_name = 'arquivado') THEN
+        ALTER TABLE mensagens_contato ADD COLUMN arquivado BOOLEAN DEFAULT FALSE;
+        RAISE NOTICE 'Campo arquivado adicionado à tabela mensagens_contato';
+    END IF;
 END
 $$;
 
@@ -119,6 +127,7 @@ SELECT
   tipo_solicitacao,
   status,
   concluido,
+  arquivado,
   created_at
 FROM mensagens_contato 
 ORDER BY created_at DESC 
