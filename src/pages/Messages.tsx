@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAllMessages, updateMessageStatus, toggleMessageComplete, archiveMessage } from '../services/supabase';
 import { useAuth } from '../hooks/useAuth';
 import type { ContactMessage } from '../types';
@@ -14,7 +14,7 @@ export const Messages = () => {
 
   const { user } = useAuth();
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
       console.log('📬 Carregando mensagens de contato...');
       const data = await getAllMessages(showArchived);
@@ -25,58 +25,124 @@ export const Messages = () => {
         const updatedMessage = data.find(m => m.id === selectedMessage.id);
         setSelectedMessage(updatedMessage || null);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Erro ao carregar mensagens:', err);
-      setError(err.message || 'Erro ao carregar mensagens');
+      const message = err instanceof Error ? err.message : 'Erro ao carregar mensagens';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [showArchived, selectedMessage]);
 
   useEffect(() => {
     loadMessages();
-  }, [showArchived]);
+  }, [showArchived, loadMessages]);
 
-  const handleStatusChange = async (messageId: string, newStatus: 'pendente' | 'lido' | 'respondido') => {
+  // Função unificada para mudança de status (combina status da mensagem e conclusão)
+  const handleUnifiedStatusChange = async (messageId: string, unifiedStatus: 'pendente' | 'lido' | 'respondido' | 'concluido') => {
     if (!user) return;
     try {
-      await updateMessageStatus(messageId, newStatus, user.id);
+      let newMessageStatus: 'pendente' | 'lido' | 'respondido';
+      let isComplete = false;
+      
+      // Mapear status unificado para status da mensagem e conclusão
+      switch (unifiedStatus) {
+        case 'pendente':
+          newMessageStatus = 'pendente';
+          isComplete = false;
+          break;
+        case 'lido':
+          newMessageStatus = 'lido';
+          isComplete = false;
+          break;
+        case 'respondido':
+          newMessageStatus = 'respondido';
+          isComplete = false;
+          break;
+        case 'concluido':
+          newMessageStatus = 'respondido'; // Concluído implica que foi respondido
+          isComplete = true;
+          break;
+        default:
+          newMessageStatus = 'pendente';
+          isComplete = false;
+      }
+
+      // Atualizar status da mensagem
+      await updateMessageStatus(messageId, newMessageStatus, user.id);
+      
+      // Atualizar status de conclusão se necessário
+      if (isComplete) {
+        await toggleMessageComplete(messageId, isComplete, user.id);
+      }
+      
+      // Atualizar estado local
       setMessages(prev => 
         prev.map(msg => 
           msg.id === messageId 
-            ? { ...msg, status: newStatus, respondido_por: newStatus !== 'pendente' ? user.id : undefined }
+            ? { 
+                ...msg, 
+                status: newMessageStatus, 
+                concluido: isComplete,
+                respondido_por: newMessageStatus !== 'pendente' ? user.id : undefined 
+              }
             : msg
         )
       );
+      
       // Atualizar mensagem selecionada se for a mesma
       if (selectedMessage?.id === messageId) {
-        setSelectedMessage(prev => prev ? { ...prev, status: newStatus, respondido_por: newStatus !== 'pendente' ? user.id : undefined } : null);
+        setSelectedMessage(prev => prev ? { 
+          ...prev, 
+          status: newMessageStatus, 
+          concluido: isComplete,
+          respondido_por: newMessageStatus !== 'pendente' ? user.id : undefined 
+        } : null);
       }
-      console.log(`✅ Status atualizado para ${newStatus}`);
-    } catch (err: any) {
-      console.error('❌ Erro ao atualizar status:', err);
+      
+      console.log(`✅ Status unificado atualizado para ${unifiedStatus}`);
+    } catch (err: unknown) {
+      console.error('❌ Erro ao atualizar status unificado:', err);
     }
   };
 
-  const handleToggleComplete = async (messageId: string, currentComplete: boolean) => {
-    if (!user) return;
-    try {
-      const newComplete = !currentComplete;
-      await toggleMessageComplete(messageId, newComplete, user.id);
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId 
-            ? { ...msg, concluido: newComplete }
-            : msg
-        )
-      );
-      // Atualizar mensagem selecionada se for a mesma
-      if (selectedMessage?.id === messageId) {
-        setSelectedMessage(prev => prev ? { ...prev, concluido: newComplete } : null);
-      }
-      console.log(`✅ Mensagem marcada como ${newComplete ? 'concluída' : 'não concluída'}`);
-    } catch (err: any) {
-      console.error('❌ Erro ao alterar status de conclusão:', err);
+  // Função para obter status unificado baseado no status da mensagem e conclusão
+  const getUnifiedStatus = (message: ContactMessage): 'pendente' | 'lido' | 'respondido' | 'concluido' => {
+    if (message.concluido) {
+      return 'concluido';
+    }
+    return message.status;
+  };
+
+  // Função para obter cor do status unificado
+  const getUnifiedStatusColor = (status: 'pendente' | 'lido' | 'respondido' | 'concluido') => {
+    switch (status) {
+      case 'pendente':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'lido':
+        return 'bg-blue-100 text-blue-800';
+      case 'respondido':
+        return 'bg-green-100 text-green-800';
+      case 'concluido':
+        return 'bg-emerald-100 text-emerald-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Função para obter label do status unificado
+  const getUnifiedStatusLabel = (status: 'pendente' | 'lido' | 'respondido' | 'concluido') => {
+    switch (status) {
+      case 'pendente':
+        return '⏳ Pendente';
+      case 'lido':
+        return '👀 Lida';
+      case 'respondido':
+        return '✅ Respondida';
+      case 'concluido':
+        return '🎯 Concluída';
+      default:
+        return '📋 Indefinido';
     }
   };
 
@@ -101,7 +167,7 @@ export const Messages = () => {
         setSelectedMessage(prev => prev ? { ...prev, arquivado: shouldArchive } : null);
       }
       console.log(`✅ Mensagem ${shouldArchive ? 'arquivada' : 'desarquivada'}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ Erro ao arquivar mensagem:', err);
     }
   };
@@ -111,18 +177,6 @@ export const Messages = () => {
     return msg.status === filter;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pendente':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'lido':
-        return 'bg-blue-100 text-blue-800';
-      case 'respondido':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const getTypeColor = (tipo: string) => {
     switch (tipo) {
@@ -175,26 +229,23 @@ export const Messages = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-4">
             <h1 className="text-3xl font-bold text-gray-900">📬 Mensagens de Contato</h1>
             
-            {/* Toggle Arquivadas - Mais Visível */}
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
-              <span className="text-sm font-medium text-gray-700">Visualização:</span>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showArchived}
-                  onChange={(e) => setShowArchived(e.target.checked)}
-                  className="rounded text-primary-600 focus:ring-primary-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Incluir arquivadas
-                </span>
-              </label>
-              {showArchived && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  {messages.filter(m => m.arquivado).length} arquivadas
+            {/* Toggle Arquivadas - Simplificado */}
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                showArchived 
+                  ? 'bg-gray-600 text-white shadow-sm'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <span>{showArchived ? '📂' : '🗄️'}</span>
+              <span>{showArchived ? 'Ocultar Arquivadas' : 'Mostrar Arquivadas'}</span>
+              {showArchived && messages.filter(m => m.arquivado).length > 0 && (
+                <span className="px-2 py-1 bg-white/20 text-white text-xs rounded-full">
+                  {messages.filter(m => m.arquivado).length}
                 </span>
               )}
-            </div>
+            </button>
           </div>
           
           <p className="text-gray-600">
@@ -340,20 +391,11 @@ export const Messages = () => {
                             {message.assunto}
                           </h4>
                         </div>
-                        <div className="flex gap-1 ml-2 flex-shrink-0">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(message.status)}`}>
-                            {message.status.charAt(0).toUpperCase() + message.status.slice(1)}
+                        {/* Apenas tag de status - sem ícone pasta */}
+                        <div className="ml-2 flex-shrink-0">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getUnifiedStatusColor(getUnifiedStatus(message))}`}>
+                            {getUnifiedStatusLabel(getUnifiedStatus(message)).replace(/^[^\s]+ /, '')}
                           </span>
-                          {message.concluido && (
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                              ✅
-                            </span>
-                          )}
-                          {message.arquivado && (
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                              📁
-                            </span>
-                          )}
                         </div>
                       </div>
                       <div className="text-sm text-gray-600 mb-2">
@@ -370,25 +412,8 @@ export const Messages = () => {
                           {message.mensagem}
                         </p>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-500">
-                          <span className="font-medium">Enviado:</span> {new Date(message.created_at).toLocaleDateString('pt-BR')}
-                        </div>
-                        {/* Botão Arquivar na lista */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevenir seleção da mensagem
-                            handleArchiveMessage(message.id, !message.arquivado);
-                          }}
-                          className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                            message.arquivado
-                              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                          }`}
-                          title={message.arquivado ? 'Desarquivar mensagem' : 'Arquivar mensagem'}
-                        >
-                          {message.arquivado ? '📂' : '🗄️'}
-                        </button>
+                      <div className="text-xs text-gray-500">
+                        <span className="font-medium">Enviado:</span> {new Date(message.created_at).toLocaleDateString('pt-BR')}
                       </div>
                     </div>
                   ))}
@@ -409,22 +434,48 @@ export const Messages = () => {
                         {selectedMessage.assunto}
                       </h2>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedMessage.status)}`}>
-                          {selectedMessage.status.charAt(0).toUpperCase() + selectedMessage.status.slice(1)}
-                        </span>
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(selectedMessage.tipo_solicitacao)}`}>
                           {CONTACT_TYPES_LABELS[selectedMessage.tipo_solicitacao]}
                         </span>
-                        {selectedMessage.concluido && (
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                            ✅ Concluída
-                          </span>
-                        )}
                         {selectedMessage.arquivado && (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                             📁 Arquivada
                           </span>
                         )}
+                      </div>
+                    </div>
+                    
+                    {/* Controles no lado direito */}
+                    <div className="flex items-start gap-3">
+                      {/* Controle de Status */}
+                      <div className="flex flex-col items-end gap-1">
+                        <label className="text-xs font-medium text-gray-600">Status</label>
+                        <select
+                          value={getUnifiedStatus(selectedMessage)}
+                          onChange={(e) => handleUnifiedStatusChange(selectedMessage.id, e.target.value as 'pendente' | 'lido' | 'respondido' | 'concluido')}
+                          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[150px] bg-white shadow-sm"
+                        >
+                          <option value="pendente">⏳ Pendente</option>
+                          <option value="lido">👀 Lida</option>
+                          <option value="respondido">✅ Respondida</option>
+                          <option value="concluido">🎯 Concluída</option>
+                        </select>
+                      </div>
+                      
+                      {/* Botão Arquivar */}
+                      <div className="flex flex-col items-end gap-1">
+                        <label className="text-xs font-medium text-gray-600">Arquivo</label>
+                        <button
+                          onClick={() => handleArchiveMessage(selectedMessage.id, !selectedMessage.arquivado)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2 min-w-[120px] justify-center ${
+                            selectedMessage.arquivado
+                              ? 'bg-blue-500 text-white hover:bg-blue-600'
+                              : 'bg-orange-500 text-white hover:bg-orange-600'
+                          }`}
+                        >
+                          <span>{selectedMessage.arquivado ? '📂' : '📁'}</span>
+                          <span>{selectedMessage.arquivado ? 'Desarquivar' : 'Arquivar'}</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -442,35 +493,6 @@ export const Messages = () => {
                     </div>
                   </div>
 
-                  {/* Controles */}
-                  <div className="flex flex-wrap gap-3">
-                    {/* Dropdown de Status com Conclusão */}
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-medium text-gray-700">Status da Mensagem</label>
-                      <select
-                        value={selectedMessage.status}
-                        onChange={(e) => handleStatusChange(selectedMessage.id, e.target.value as 'pendente' | 'lido' | 'respondido')}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[140px]"
-                      >
-                        <option value="pendente">📋 Pendente</option>
-                        <option value="lido">👀 Lida</option>
-                        <option value="respondido">✅ Respondida</option>
-                      </select>
-                    </div>
-
-                    {/* Dropdown de Conclusão */}
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-medium text-gray-700">Status da Tarefa</label>
-                      <select
-                        value={selectedMessage.concluido ? 'concluida' : 'pendente'}
-                        onChange={(e) => handleToggleComplete(selectedMessage.id, e.target.value === 'pendente')}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[140px]"
-                      >
-                        <option value="pendente">⏳ Em Andamento</option>
-                        <option value="concluida">✅ Concluída</option>
-                      </select>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Conteúdo da Mensagem */}
