@@ -174,82 +174,86 @@ export const CasoDetalhes = () => {
           <div className="p-8">
             {/* Informações Básicas */}
             {activeTab === 'basic' && (
-              <div className="space-y-8">
-                {/* Informações do Projeto e Responsável */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-3">📋 Projeto</h4>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Título:</span>
-                        <p className="text-gray-900 font-semibold">{caso.titulo}</p>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Localização:</span>
-                        <p className="text-gray-700 flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                          </svg>
-                          {getLocationString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div className="p-4 space-y-4">
                   
-                  {caso.extensionista && (
+                  {/* Informações Básicas - Grid Compacto */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4 border-b border-gray-100">
+                    {/* Título */}
                     <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-3">👤 Catalogado por</h4>
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                          <span className="text-primary-600 font-bold">
-                            {caso.extensionista.nome.split(' ').map(n => n[0]).join('').toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{caso.extensionista.nome}</div>
-                          <div className="text-sm text-gray-600">Extensionista</div>
-                          {caso.extensionista.instituicao && (
-                            <div className="text-sm text-gray-500">{caso.extensionista.instituicao}</div>
-                          )}
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Título</span>
+                      <p className="text-gray-900 font-semibold text-sm leading-tight">{caso.titulo}</p>
+                    </div>
+                    
+                    {/* Localização */}
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Localização</span>
+                      <p className="text-gray-700 text-sm flex items-center">
+                        <svg className="w-3 h-3 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                        </svg>
+                        {getLocationString()}
+                      </p>
+                    </div>
+                    
+                    {/* Catalogado por */}
+                    {caso.extensionista && (
+                      <div>
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Catalogado por</span>
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-2">
+                            <span className="text-primary-600 font-bold text-xs">
+                              {caso.extensionista.nome.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900 text-sm">{caso.extensionista.nome}</div>
+                            <div className="text-xs text-gray-500">{caso.extensionista.instituicao}</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo</h3>
-                  {caso.resumo ? (
-                    <div className="bg-primary-50 p-4 rounded-lg">
-                      <p className="text-primary-800 leading-relaxed">{caso.resumo}</p>
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 italic">Resumo não informado</p>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Descrição Completa</h3>
-                  <div className="prose max-w-none text-gray-700 leading-relaxed bg-gray-50 p-6 rounded-lg">
-                    {caso.descricao.split('\n').map((paragraph, index) => (
-                      <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
-                    ))}
+                    )}
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">Categoria</h4>
+                  {/* Categorias - Inline */}
+                  <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-gray-100">
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Categorias:</span>
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
                       {caso.categoria}
                     </span>
+                    {caso.subcategoria && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                        {caso.subcategoria}
+                      </span>
+                    )}
                   </div>
-                  {caso.subcategoria && (
-                    <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-2">Subcategoria</h4>
-                      <p className="text-gray-700">{caso.subcategoria}</p>
+
+                  {/* Resumo - Inline */}
+                  {caso.resumo && (
+                    <div className="pb-4 border-b border-gray-100">
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-2">Resumo</span>
+                      <p className="text-gray-800 leading-relaxed italic border-l-3 border-blue-400 pl-3 bg-blue-50 py-2 rounded-r text-sm">
+                        "{caso.resumo}"
+                      </p>
                     </div>
                   )}
+
+                  {/* Descrição - Texto fluido */}
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-2">Descrição</span>
+                    <div className="prose max-w-none">
+                      {caso.descricao.split('\n').map((paragraph, index) => (
+                        paragraph.trim() ? (
+                          <p key={index} className="text-gray-700 leading-relaxed mb-3 last:mb-0 text-sm">
+                            {paragraph}
+                          </p>
+                        ) : (
+                          <div key={index} className="my-2" />
+                        )
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
               </div>
             )}
