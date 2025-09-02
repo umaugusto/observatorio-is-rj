@@ -108,23 +108,6 @@ function App() {
   );
 }
 
-// Componente temporário para páginas não implementadas
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div className="text-center">
-      <div className="w-24 h-24 mx-auto mb-4 bg-primary-100 rounded-full flex items-center justify-center">
-        <span className="text-4xl">🚧</span>
-      </div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">{title}</h1>
-      <p className="text-gray-600 mb-6">
-        Esta página está em desenvolvimento.
-      </p>
-      <a href="/" className="btn-primary">
-        Voltar ao Início
-      </a>
-    </div>
-  </div>
-);
 
 // Página 404
 const NotFound = () => (

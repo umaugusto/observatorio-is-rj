@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
@@ -16,7 +16,7 @@ L.Icon.Default.mergeOptions({
 });
 
 interface CasoComCoordenadas extends CasoInovacao {
-  coords?: { lat: number; lng: number };
+  coords?: { lat: number; lng: number } | null;
   locationString?: string;
 }
 
