@@ -21,8 +21,9 @@ npm run preview            # Preview production build
 ### Database Operations (via SQL scripts)
 ```bash
 # Execute via Supabase SQL Editor or psql command
-check-table-structure.sql   # Verify database schema and data integrity
-fix-missing-cidade.sql      # Fix cases with missing cidade field
+fix-messages-flow.sql        # Complete messages system setup and RLS policies
+check-table-structure.sql    # Verify database schema and data integrity
+fix-missing-cidade.sql       # Fix cases with missing cidade field
 cleanup-duplicated-cases.sql # Remove duplicate cases and maintain data consistency
 ```
 
@@ -71,6 +72,13 @@ CasoInovacao: {
   // Meta
   extensionista_id, status_ativo, visualizacoes?, created_at, updated_at
 }
+ContactMessage: {
+  id, nome, email, telefone?, assunto, mensagem,
+  tipo_solicitacao: 'acesso' | 'duvida' | 'sugestao' | 'outro',
+  status: 'pendente' | 'lido' | 'respondido',
+  concluido?: boolean, respondido_por?, resposta?,
+  created_at, updated_at
+}
 ```
 
 ### Database Schema Evolution
@@ -106,6 +114,13 @@ getCasoById(id)             // Single case with full details
 createCase(caseData)        // Create new case
 updateCaso(id, updates)     // Update existing case (with detailed logging)
 uploadCaseImage(file)       // Upload case cover image to storage
+
+// Messages System
+createContactMessage(data)   // Create new contact message (public access)
+getAllMessages()            // Get all messages (extensionistas only)
+updateMessageStatus(id, status, userId?, resposta?) // Update message status
+toggleMessageComplete(id, concluido, userId) // Mark message as completed/incomplete
+getUnreadMessagesCount()    // Count pending messages for badge counter
 ```
 
 ### File Structure
@@ -128,9 +143,16 @@ src/
 │   └── admin/
 │       └── UserManagement.tsx     # Complete admin user management with default passwords
 ├── hooks/useAuth.tsx              # Authentication context & state
-├── services/supabase.ts           # Database operations & avatar storage
+├── services/
+│   ├── supabase.ts                # Database operations & avatar storage
+│   ├── demoInterceptor.ts         # Demo mode simulation layer
+│   └── demoData.ts                # Mock data for demo mode
 ├── types/index.ts                 # TypeScript interfaces
-└── utils/constants.ts             # Routes, categories, user types
+├── utils/
+│   ├── constants.ts               # Routes, categories, user types  
+│   └── formatters.ts              # Phone number formatting utilities
+└── sql/
+    └── fix-messages-flow.sql      # Complete database setup script
 ```
 
 ## Development Patterns
@@ -345,6 +367,7 @@ src/
 - **PasswordChangeGuard.tsx**: Password change enforcement component
 
 ### Database Maintenance Scripts
+- **fix-messages-flow.sql**: Complete messages system setup with RLS policies and field validation
 - **check-table-structure.sql**: Verify database schema and data integrity
 - **fix-missing-cidade.sql**: Fix cases with empty cidade field (enables Publish button)
 - **cleanup-duplicated-cases.sql**: Remove duplicate cases and maintain data consistency
@@ -446,5 +469,74 @@ const casosStats = {
   total: allCasos.length, // Use all cases for accuracy
   categorias: new Set(allCasos.map(caso => caso.categoria)).size,
   extensionistas: new Set(allCasos.map(caso => caso.extensionista_id)).size,
+};
+```
+
+## Messages System
+
+### Contact Message Flow
+- **Public Access**: Visitors can submit messages via `/contato` form (no authentication required)
+- **Extensionist Access**: All extensionistas can view and manage messages via `/mensagens`
+- **Status Management**: Messages progress through: `pendente` → `lido` → `respondido`
+- **Task Completion**: Additional `concluido` boolean flag for workflow tracking
+
+### Message Management Interface
+- **Filtering**: View all, pending, read, or responded messages
+- **Status Controls**: 
+  - 📖 Mark as Read (pendente → lida)
+  - ⏳ Mark as Pending (lida → pendente)
+  - ✅ Mark as Completed (adds completion flag)
+  - ❌ Mark as Incomplete (removes completion flag)
+- **Real-time Updates**: Message counts update automatically in Dashboard badge
+- **Visual Indicators**: Color-coded status badges and completion indicators
+
+### RLS Policies for Messages
+```sql
+-- Visitors can create messages (public form access)
+CREATE POLICY "Visitantes podem criar mensagens" ON mensagens_contato FOR INSERT 
+TO anon, authenticated WITH CHECK (true);
+
+-- Extensionistas can read all messages  
+CREATE POLICY "Extensionistas podem ler todas mensagens" ON mensagens_contato FOR SELECT
+TO authenticated USING (EXISTS (
+  SELECT 1 FROM usuarios WHERE usuarios.id::uuid = auth.uid() 
+  AND (usuarios.tipo IN ('extensionista', 'pesquisador', 'coordenador') OR usuarios.is_admin = true)
+));
+
+-- Extensionistas can update message status
+CREATE POLICY "Extensionistas podem atualizar mensagens" ON mensagens_contato FOR UPDATE
+TO authenticated USING (/* same conditions as SELECT */);
+```
+
+## Phone Number Formatting System
+
+### Automatic Phone Masking
+- **Format**: `(99) 9999-9999` for landlines, `(99) 99999-9999` for mobile
+- **Real-time**: Applies formatting as user types
+- **Limit**: Automatically caps at 11 digits (Brazilian standard)
+- **Applied to**: All phone input fields across the application
+
+### Formatting Utilities (`src/utils/formatters.ts`)
+```typescript
+formatTelefone(value: string)    // Apply mask (99) 99999-9999
+cleanTelefone(value: string)     // Remove all non-digits  
+isValidTelefone(value: string)   // Validate 10-11 digit format
+```
+
+### Forms with Phone Formatting
+- **Contact Form** (`/contato`): Visitor phone input
+- **User Profile** (`/perfil`): Personal phone editing
+- **Admin User Management** (`/admin/usuarios`): User phone field
+- **Case Editor** (`/admin/casos/editar`): Contact team phone (`contato_telefone`)
+
+### Implementation Pattern
+```typescript
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  let processedValue = value;
+  if (name === 'telefone' || name === 'contato_telefone') {
+    processedValue = formatTelefone(value);
+  }
+  setFormData(prev => ({ ...prev, [name]: processedValue }));
 };
 ```
