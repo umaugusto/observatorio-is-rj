@@ -3,45 +3,69 @@ import { Link } from 'react-router-dom';
 import { getCasos } from '../services/supabase';
 import { CATEGORIES, ROUTES } from '../utils/constants';
 import type { CasoInovacao } from '../types';
+import { 
+  GraduationCap, 
+  Heart, 
+  Leaf, 
+  DollarSign, 
+  Palette, 
+  Cpu, 
+  Users, 
+  Home
+} from 'lucide-react';
 
 interface CategoriaStats {
   categoria: string;
   count: number;
   casos: CasoInovacao[];
   color: string;
-  icon: string;
+  icon: React.ElementType;
+  totalPessoas: number;
+  orcamentoTotal: number;
+  casosAtivos: number;
+  cidadesAtendidas: number;
 }
 
-const getCategoryIcon = (categoria: string): string => {
-  const icons: Record<string, string> = {
-    'Educação': '🎓',
-    'Saúde': '🏥',
-    'Meio Ambiente': '🌱',
-    'Cultura': '🎭',
-    'Tecnologia': '💻',
-    'Empreendedorismo': '🚀',
-    'Inclusão Social': '🤝',
-    'Urbanismo': '🏙️',
-    'Alimentação': '🍽️',
-    'Esporte': '⚽',
+const getCategoryIcon = (categoria: string): React.ElementType => {
+  const icons: Record<string, React.ElementType> = {
+    'Educação': GraduationCap,
+    'Saúde': Heart,
+    'Meio Ambiente': Leaf,
+    'Geração de Renda': DollarSign,
+    'Cultura': Palette,
+    'Tecnologia Social': Cpu,
+    'Direitos Humanos': Users,
+    'Habitação': Home,
   };
-  return icons[categoria] || '📋';
+  return icons[categoria] || Users;
 };
 
 const getCategoryColor = (categoria: string): string => {
   const colors: Record<string, string> = {
-    'Educação': 'from-blue-400 to-blue-600',
-    'Saúde': 'from-red-400 to-red-600',
-    'Meio Ambiente': 'from-green-400 to-green-600',
-    'Cultura': 'from-purple-400 to-purple-600',
-    'Tecnologia': 'from-gray-400 to-gray-600',
-    'Empreendedorismo': 'from-orange-400 to-orange-600',
-    'Inclusão Social': 'from-pink-400 to-pink-600',
-    'Urbanismo': 'from-indigo-400 to-indigo-600',
-    'Alimentação': 'from-yellow-400 to-yellow-600',
-    'Esporte': 'from-emerald-400 to-emerald-600',
+    'Educação': 'text-blue-600',
+    'Saúde': 'text-red-600',
+    'Meio Ambiente': 'text-green-600',
+    'Geração de Renda': 'text-yellow-600',
+    'Cultura': 'text-purple-600',
+    'Tecnologia Social': 'text-gray-600',
+    'Direitos Humanos': 'text-pink-600',
+    'Habitação': 'text-indigo-600',
   };
-  return colors[categoria] || 'from-gray-400 to-gray-600';
+  return colors[categoria] || 'text-gray-600';
+};
+
+const getCategoryBg = (categoria: string): string => {
+  const colors: Record<string, string> = {
+    'Educação': 'bg-blue-50',
+    'Saúde': 'bg-red-50',
+    'Meio Ambiente': 'bg-green-50',
+    'Geração de Renda': 'bg-yellow-50',
+    'Cultura': 'bg-purple-50',
+    'Tecnologia Social': 'bg-gray-50',
+    'Direitos Humanos': 'bg-pink-50',
+    'Habitação': 'bg-indigo-50',
+  };
+  return colors[categoria] || 'bg-gray-50';
 };
 
 export const Categorias = () => {
@@ -56,19 +80,63 @@ export const Categorias = () => {
         const data = await getCasos();
         setCasos(data);
         
+        // Filtrar apenas casos com categoria válida
+        const casosValidos = data.filter(caso => 
+          caso.categoria && 
+          caso.categoria.trim() !== '' && 
+          CATEGORIES.includes(caso.categoria as any)
+        );
+        
+        // Log casos com categoria problemática para debug
+        const casosProblematicos = data.filter(caso => 
+          !caso.categoria || 
+          caso.categoria.trim() === '' || 
+          !CATEGORIES.includes(caso.categoria as any)
+        );
+        
+        if (casosProblematicos.length > 0) {
+          console.warn(`🚨 Encontrados ${casosProblematicos.length} casos com categoria problemática:`, 
+            casosProblematicos.map(c => ({ id: c.id, titulo: c.titulo, categoria: c.categoria }))
+          );
+        }
+        
         // Calcular estatísticas por categoria
         const stats: CategoriaStats[] = CATEGORIES.map(categoria => {
-          const casosDaCategoria = data.filter(caso => caso.categoria === categoria);
+          const casosDaCategoria = casosValidos.filter(caso => caso.categoria === categoria);
+          
+          // Calcular métricas agregadas
+          const totalPessoas = casosDaCategoria.reduce((sum, caso) => 
+            sum + (caso.pessoas_impactadas || 0), 0
+          );
+          
+          const orcamentoTotal = casosDaCategoria.reduce((sum, caso) => 
+            sum + (caso.orcamento || 0), 0
+          );
+          
+          const casosAtivos = casosDaCategoria.filter(caso => 
+            caso.status === 'ativo' || !caso.status
+          ).length;
+          
+          const cidadesUnicas = new Set(casosDaCategoria
+            .map(caso => caso.cidade)
+            .filter(Boolean)
+          );
+          
           return {
             categoria,
             count: casosDaCategoria.length,
             casos: casosDaCategoria.slice(0, 3), // Primeiros 3 casos para preview
             color: getCategoryColor(categoria),
-            icon: getCategoryIcon(categoria)
+            icon: getCategoryIcon(categoria),
+            totalPessoas,
+            orcamentoTotal,
+            casosAtivos,
+            cidadesAtendidas: cidadesUnicas.size
           };
-        }).sort((a, b) => b.count - a.count); // Ordenar por quantidade
+        });
 
         setCategoriaStats(stats);
+        setCasos(casosValidos); // Usar apenas casos válidos
       } catch (err) {
         setError('Erro ao carregar categorias');
         console.error(err);
@@ -80,140 +148,164 @@ export const Categorias = () => {
     loadCasos();
   }, []);
 
+  // Ordenar categorias por quantidade (maior para menor)
+  const sortedStats = categoriaStats.sort((a, b) => b.count - a.count);
+
   const totalCasos = casos.length;
   const categoriasAtivas = categoriaStats.filter(cat => cat.count > 0).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container-custom">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Categorias de Inovação Social
-          </h1>
-          <p className="text-gray-600 max-w-2xl">
-            Explore os casos de inovação social organizados por categoria. 
-            Cada categoria representa diferentes áreas de impacto social no Rio de Janeiro.
-          </p>
-        </div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-6 py-16">
+        {/* Header com big numbers globais */}
+        <div className="bg-gray-50 rounded-2xl p-8 mb-8">
+          {/* Título */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-light text-gray-900 mb-3">
+              Categorias
+            </h1>
+            <p className="text-gray-600 text-lg font-light max-w-2xl">
+              Uma visão geral das áreas de inovação social
+            </p>
+          </div>
 
-        {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex items-center">
-              <div className="p-3 bg-primary-100 rounded-lg">
-                <span className="text-2xl">📊</span>
+          {/* Big Numbers Globais */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900">{totalCasos}</div>
+              <div className="text-sm text-gray-500 font-medium">Casos Registrados</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900">{categoriasAtivas}</div>
+              <div className="text-sm text-gray-500 font-medium">Categorias Ativas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900">
+                {casos.reduce((sum, caso) => sum + (caso.pessoas_impactadas || 0), 0).toLocaleString()}
               </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">{totalCasos}</div>
-                <div className="text-gray-600">Total de Casos</div>
+              <div className="text-sm text-gray-500 font-medium">Pessoas Impactadas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900">
+                {new Set(casos.map(c => c.cidade).filter(Boolean)).size}
               </div>
+              <div className="text-sm text-gray-500 font-medium">Cidades Atendidas</div>
             </div>
           </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-lg">
-                <span className="text-2xl">🎯</span>
-              </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">{categoriasAtivas}</div>
-                <div className="text-gray-600">Categorias Ativas</div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Categories Grid */}
+        {/* Grid de categorias */}
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border border-gray-200 border-t-gray-900"></div>
           </div>
         ) : error ? (
-          <div className="text-center py-12">
-            <p className="text-red-600">{error}</p>
+          <div className="text-center py-20">
+            <p className="text-gray-500">{error}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categoriaStats.map((categoria) => (
-              <div 
-                key={categoria.categoria}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
-              >
-                {/* Header compacto */}
-                <div className={`relative bg-gradient-to-r ${categoria.color} p-4 text-white h-24 flex items-center justify-between overflow-hidden`}>
-                  {/* Imagem de fundo sutil */}
-                  <div className="absolute inset-0 bg-black/10"></div>
-                  <div className="relative flex items-center">
-                    <div className="text-2xl mr-3">{categoria.icon}</div>
-                    <h3 className="text-lg font-bold">{categoria.categoria}</h3>
-                  </div>
-                  <div className="relative text-right">
-                    <div className="text-xl font-bold">{categoria.count}</div>
-                    <div className="text-xs opacity-90">
-                      {categoria.count === 1 ? 'caso' : 'casos'}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {sortedStats.map((categoria) => {
+              const IconComponent = categoria.icon;
+              
+              return (
+                <div 
+                  key={categoria.categoria}
+                  className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:border-gray-200 hover:shadow-lg transition-all duration-200 shadow-sm"
+                >
+                  {/* Header com ícone e nome */}
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className={`p-2 rounded-lg ${getCategoryBg(categoria.categoria)}`}>
+                      <IconComponent className={`w-5 h-5 ${categoria.color}`} />
                     </div>
+                    <h3 className="text-lg font-medium text-gray-900">{categoria.categoria}</h3>
                   </div>
-                </div>
 
-                {/* Conteúdo com melhor legibilidade e layout flex */}
-                <div className="p-6 flex flex-col h-80">
                   {categoria.count > 0 ? (
                     <>
-                      <div className="flex-1 mb-6">
-                        <h4 className="font-semibold text-gray-900 mb-4 text-base">Casos recentes:</h4>
-                        <div className="space-y-4">
-                          {categoria.casos.map((caso) => (
-                            <div key={caso.id} className="border-l-4 border-gray-200 pl-4 py-2 hover:border-primary-300 transition-colors">
-                              <div className="text-gray-900 font-semibold text-sm leading-tight mb-1 line-clamp-2">
-                                {caso.titulo}
+                      {/* Big Numbers Grid 2x2 */}
+                      <div className="grid grid-cols-2 gap-3 mb-4">
+                        {/* Total de Projetos */}
+                        <div className={`${getCategoryBg(categoria.categoria)} p-4 rounded-lg text-center`}>
+                          <div className={`text-2xl font-bold ${categoria.color} mb-1`}>
+                            {categoria.count}
+                          </div>
+                          <div className="text-xs text-gray-600 font-medium">
+                            {categoria.count === 1 ? 'Projeto' : 'Projetos'}
+                          </div>
+                        </div>
+
+                        {/* Pessoas Impactadas */}
+                        <div className="bg-green-50 p-4 rounded-lg text-center">
+                          <div className="text-2xl font-bold text-green-700 mb-1">
+                            {categoria.totalPessoas > 0 ? 
+                              (categoria.totalPessoas > 999 ? 
+                                `${Math.round(categoria.totalPessoas / 1000)}k` : 
+                                categoria.totalPessoas.toLocaleString()
+                              ) : '—'
+                            }
+                          </div>
+                          <div className="text-xs text-gray-600 font-medium">
+                            Pessoas
+                          </div>
+                        </div>
+
+                        {/* Projetos Ativos */}
+                        <div className="bg-blue-50 p-4 rounded-lg text-center">
+                          <div className="text-2xl font-bold text-blue-700 mb-1">
+                            {categoria.casosAtivos}
+                          </div>
+                          <div className="text-xs text-gray-600 font-medium">
+                            Ativos
+                          </div>
+                        </div>
+
+                        {/* Alcance ou Orçamento */}
+                        <div className="bg-purple-50 p-4 rounded-lg text-center">
+                          {categoria.orcamentoTotal > 0 ? (
+                            <>
+                              <div className="text-2xl font-bold text-purple-700 mb-1">
+                                {categoria.orcamentoTotal > 999999 ? 
+                                  `${(categoria.orcamentoTotal / 1000000).toFixed(1)}M` :
+                                  `${Math.round(categoria.orcamentoTotal / 1000)}k`
+                                }
                               </div>
-                              <div className="flex items-center text-gray-500 text-xs">
-                                <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                                </svg>
-                                <span className="truncate">
-                                  {(() => {
-                                    if (caso.cidade) {
-                                      const parts = [];
-                                      if (caso.bairro) parts.push(caso.bairro);
-                                      parts.push(caso.cidade);
-                                      return parts.join(', ');
-                                    }
-                                    return caso.localizacao || 'Localização não informada';
-                                  })()}
-                                </span>
+                              <div className="text-xs text-gray-600 font-medium">
+                                R$
                               </div>
-                              {caso.pessoas_impactadas && (
-                                <div className="text-primary-600 text-xs font-medium mt-1">
-                                  {caso.pessoas_impactadas.toLocaleString()} pessoas impactadas
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-2xl font-bold text-purple-700 mb-1">
+                                {categoria.cidadesAtendidas || '—'}
+                              </div>
+                              <div className="text-xs text-gray-600 font-medium">
+                                {categoria.cidadesAtendidas === 1 ? 'Cidade' : 'Cidades'}
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
-                      
-                      {/* Botão fixo na parte inferior */}
-                      <div className="mt-auto">
-                        <Link 
-                          to={`${ROUTES.CASOS}?categoria=${encodeURIComponent(categoria.categoria)}`}
-                          className="w-full btn-primary block text-center text-sm py-3"
-                        >
-                          Ver todos os {categoria.count} casos
-                        </Link>
-                      </div>
+
+                      {/* CTA */}
+                      <Link 
+                        to={`${ROUTES.CASOS}?categoria=${encodeURIComponent(categoria.categoria)}`}
+                        className="block w-full text-center py-3 px-4 bg-gray-50 hover:bg-gray-100 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg transition-colors"
+                      >
+                        Ver todos os {categoria.count} {categoria.count === 1 ? 'projeto' : 'projetos'}
+                      </Link>
                     </>
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-                      <div className="text-4xl mb-3">🔍</div>
-                      <p className="text-sm text-center">
-                        Nenhum caso cadastrado<br />nesta categoria ainda.
-                      </p>
+                    <div className="py-8 text-center">
+                      <div className="text-3xl text-gray-200 mb-2">—</div>
+                      <div className="text-xs text-gray-400">
+                        Nenhum projeto
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
