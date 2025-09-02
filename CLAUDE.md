@@ -18,6 +18,14 @@ npm run lint               # ESLint check (must pass with 0 warnings)
 npm run preview            # Preview production build
 ```
 
+### Database Operations (via SQL scripts)
+```bash
+# Execute via Supabase SQL Editor or psql command
+check-table-structure.sql   # Verify database schema and data integrity
+fix-missing-cidade.sql      # Fix cases with missing cidade field
+cleanup-duplicated-cases.sql # Remove duplicate cases and maintain data consistency
+```
+
 ## Architecture
 
 ### Authentication Flow
@@ -49,11 +57,28 @@ User: {
   ativo, must_change_password?, isDemo?, 
   created_at, updated_at
 }
-CasoInovacao: { 
-  id, titulo, descricao, resumo?, localizacao, categoria, subcategoria?,
-  extensionista_id, status_ativo, imagem_url?, coordenadas_lat?, coordenadas_lng?
+CasoInovacao: {
+  // Basic info
+  id, titulo, descricao, resumo?, categoria, subcategoria?,
+  // Location (updated schema)
+  cidade?, estado?, bairro?, cep?, localizacao?, coordenadas_lat?, coordenadas_lng?,
+  // Media & social
+  imagem_url?, link_projeto?, video_url?, instagram_url?, facebook_url?, whatsapp?,
+  // Impact data
+  pessoas_impactadas?, orcamento?, data_inicio?, data_fim?, status?, tags?,
+  // Team contact
+  contato_nome?, contato_email?, contato_telefone?,
+  // Meta
+  extensionista_id, status_ativo, visualizacoes?, created_at, updated_at
 }
 ```
+
+### Database Schema Evolution
+The database has undergone significant improvements:
+- **Location fields**: Migrated from single `localizacao` to separate `cidade`, `estado`, `bairro`, `cep` fields
+- **Social media**: Added `instagram_url`, `facebook_url`, `whatsapp` fields
+- **Enhanced metadata**: Added `status`, `tags`, `video_url`, team contact fields
+- **Backwards compatibility**: Old `localizacao` field still supported for data migration
 
 ### Key Service Functions
 ```typescript
@@ -77,6 +102,10 @@ deleteAvatar(userId, url?)   // Remove avatar and clean storage
 // Cases
 getCasos()                   // All active cases with extensionista join
 getCasosByCategory(categoria) // Filtered by category
+getCasoById(id)             // Single case with full details
+createCase(caseData)        // Create new case
+updateCaso(id, updates)     // Update existing case (with detailed logging)
+uploadCaseImage(file)       // Upload case cover image to storage
 ```
 
 ### File Structure
@@ -191,11 +220,24 @@ src/
 ### Database Query Optimization
 - `getUser()` has 5-second timeout to prevent hanging
 - `updateUser()` modified to handle array responses (removed `.single()` to prevent "Cannot coerce to single JSON object" errors)
+- `updateCaso()` includes extensive debugging logging with existence checks before updates
 - Extensive logging helps diagnose query timing issues
+
+### RLS Policy Issues
+- **Admin case editing**: Ensure RLS policies check `is_admin` flag, not deprecated `tipo='admin'`
+- **Policy example**: `(auth.uid() = extensionista_id OR EXISTS (SELECT 1 FROM usuarios WHERE id = auth.uid() AND is_admin = true))`
+- **Data integrity**: Use dedicated SQL scripts for bulk operations to avoid RLS conflicts
 
 ### Storage Permissions
 - Avatar bucket needs policies for user file upload/update
+- Case image bucket (`case-images`) for cover photo uploads
 - File paths use user ID for security: `avatars/{userId}-{timestamp}.ext`
+
+### CEP Integration & Location Data
+- **ViaCEP API**: Automatic address lookup when CEP is entered (8-digit format only)
+- **Form mapping**: Handles both new location fields (cidade/estado/bairro) and legacy `localizacao`
+- **Required fields**: `cidade` field is mandatory for case publication (enables Publish button)
+- **CORS considerations**: ViaCEP works in development and production environments
 
 ## Page Structure & Components
 
@@ -209,7 +251,7 @@ src/
 
 ### Admin Pages
 - **Case Management** (`src/pages/admin/CaseManagement.tsx`): Full CRUD with icon-based actions
-- **Case Editor** (`src/pages/admin/CaseEditor.tsx`): Tab-based form with CEP integration and social media fields
+- **Case Editor** (`src/pages/admin/CaseEditor.tsx`): Tab-based form with CEP integration, social media fields, and comprehensive validation
 - **User Management** (`src/pages/admin/UserManagement.tsx`): Complete admin user interface
 
 ### Common Components  
@@ -278,9 +320,10 @@ src/
 - **Responsive design**: Mobile-first approach with Tailwind classes
 
 ### Server Configuration
-- **Development server**: Vite configured for `localhost:3000` with CORS enabled
+- **Development server**: Vite configured for `localhost:3000` with CORS enabled (differs from default Vite port 5173)
 - **Host configuration**: `host: true` allows external connections
 - **Port fallback**: If port 3000 is occupied, Vite will automatically use next available port
+- **Production vs Development**: README mentions port 5173 but `vite.config.ts` explicitly sets port 3000
 
 ### Database Operations
 - **Timeout handling**: Use 5-second timeouts for queries that may hang
@@ -299,6 +342,14 @@ src/
 - **create-admin-users.sql**: SQL script for bulk admin user creation
 - **EmergencySetup.tsx**: Admin account recovery interface
 - **PasswordChangeGuard.tsx**: Password change enforcement component
+
+### Database Maintenance Scripts
+- **check-table-structure.sql**: Verify database schema and data integrity
+- **fix-missing-cidade.sql**: Fix cases with empty cidade field (enables Publish button)
+- **cleanup-duplicated-cases.sql**: Remove duplicate cases and maintain data consistency
+- **01-adicionar-campos-completos.sql**: Database schema migration script
+- **02-popular-casos-completos.sql**: Populate database with 15 complete example cases
+- **03-fix-rls-policies.sql**: Update RLS policies for proper admin access
 
 ## Production Information
 

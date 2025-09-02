@@ -14,7 +14,8 @@
       "Bash(npm install:*)",
       "mcp__ide__getDiagnostics",
       "Bash(npm outdated)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": []

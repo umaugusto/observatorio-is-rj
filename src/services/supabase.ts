@@ -905,9 +905,44 @@ export const updateCaso = async (casoId: string, updates: Partial<DatabaseCasoIn
     return DemoInterceptor.updateCaso(casoId, updates);
   }
   console.log('✏️ updateCaso: Atualizando caso:', casoId);
+  console.log('✏️ updateCaso: Dados para atualizar:', Object.keys(updates));
   
+  // Verificar se o caso existe primeiro
+  const { data: existingCase, error: checkError } = await supabase
+    .from('casos_inovacao')
+    .select('id, titulo, extensionista_id')
+    .eq('id', casoId)
+    .single();
+
+  if (checkError) {
+    console.error('❌ updateCaso: Erro ao verificar caso existente:', checkError);
+    if (checkError.code === 'PGRST116') {
+      throw new Error('Caso não encontrado');
+    }
+    throw checkError;
+  }
+
+  if (!existingCase) {
+    console.error('❌ updateCaso: Caso não existe:', casoId);
+    throw new Error('Caso não encontrado');
+  }
+
+  console.log('✅ updateCaso: Caso encontrado:', existingCase.titulo);
+
+  // Verificar permissões do usuário atual
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.error('❌ updateCaso: Usuário não autenticado');
+    throw new Error('Usuário não autenticado');
+  }
+
+  console.log('👤 updateCaso: Usuário atual:', user.id);
+  console.log('👤 updateCaso: Dono do caso:', existingCase.extensionista_id);
+
   // Remove campos que não devem ser atualizados
   const { id, created_at, updated_at, ...validUpdates } = updates;
+  
+  console.log('📝 updateCaso: Executando UPDATE com:', Object.keys(validUpdates));
   
   const { data, error } = await supabase
     .from('casos_inovacao')
@@ -920,11 +955,17 @@ export const updateCaso = async (casoId: string, updates: Partial<DatabaseCasoIn
 
   if (error) {
     console.error('❌ updateCaso: Erro ao atualizar caso:', error);
+    console.error('❌ updateCaso: Código do erro:', error.code);
+    console.error('❌ updateCaso: Mensagem:', error.message);
+    console.error('❌ updateCaso: Detalhes:', error.details);
     throw error;
   }
 
+  console.log('📊 updateCaso: Linhas afetadas:', data ? data.length : 0);
+
   if (!data || data.length === 0) {
-    throw new Error('Caso não encontrado ou não foi possível atualizar');
+    console.error('❌ updateCaso: Nenhuma linha foi atualizada - provavelmente problema de permissão RLS');
+    throw new Error('Caso não encontrado ou não foi possível atualizar - verifique suas permissões');
   }
 
   const updatedCaso = data[0];

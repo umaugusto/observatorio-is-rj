@@ -95,9 +95,9 @@ export const CaseEditor = () => {
         titulo: casoData.titulo,
         descricao: casoData.descricao,
         resumo: casoData.resumo || '',
-        cep: '', // Novo campo - vazio por padrão
-        cidade: casoData.localizacao || '', // Mapear localização existente para cidade
-        estado: '', // Novo campo - vazio por padrão
+        cep: casoData.cep || '',
+        cidade: casoData.cidade || casoData.localizacao || '',
+        estado: casoData.estado || '',
         bairro: casoData.bairro || '',
         categoria: casoData.categoria,
         subcategoria: casoData.subcategoria || '',
